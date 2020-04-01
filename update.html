@@ -3,15 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <title>Update Status</title>
+    <link rel="stylesheet" href="distributed_social_network.css"/>
 </head>
 <body>
     <h1>Update Your Status</h1>
 
     <form action="update.html" method="POST">
-        <label for="status">Status:</label>
-        <input type="text" name="status" id="status">
-        <input type="submit" value="Post">
-        <input type="reset" value="Reset">
+        <ol>
+            <li>
+                <label for="status">Status:</label>
+                <input type="text" name="status" id="status" maxlength="200">
+            </li>
+            <li>
+                <input type="submit" value="Post">
+                <input type="reset" value="Reset">
+            </li>
+        </ol>
     </form>
+
+    <h2>Status Messages</h2>
+    <ul id="status_messages">
+<!--        Status Messages to be placed here-->
+    </ul>
+
+<script>
+    function loadXMLDoc() {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState === 4 && this.status === 200) {
+                myFunction(this);
+            }
+        };
+        xmlhttp.open("GET", "status.xml", true);
+        xmlhttp.send();
+    }
+
+    myFunction("status.xml");
+    function myFunction(xml) {
+        var i;
+        var xmlDoc = xml.responseXML;
+        var test = "<li>"+xml+"</li>";
+        // var x = xmlDoc.getElementsByTagName("status");
+        // for (i = 0; i < x.length; i++) {
+        //     table += "<tr><td>" +
+        //         x[i].getElementsByTagName("ARTIST")[0].childNodes[0].nodeValue +
+        //         "</td><td>" +
+        //         x[i].getElementsByTagName("TITLE")[0].childNodes[0].nodeValue +
+        //         "</td></tr>";
+        // }
+        document.getElementById("status_messages").innerHTML = test;
+    }
+</script>
+
 </body>
 </html>

@@ -1,0 +1,8 @@
+#status {
+    width: 60em
+}
+
+ol li {
+    list-style-type: none;
+    padding-bottom: 0.5em;
+}
