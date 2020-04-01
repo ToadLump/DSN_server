@@ -9,6 +9,8 @@ from socket import *
 import multiprocessing as mp
 import os.path
 import mimetypes
+import urllib.parse
+from Distributed_Social_Network_Response import DistributedSocialNetworkResponse as DSN_Response
 
 
 class Server:
@@ -17,10 +19,14 @@ class Server:
                        "Not For You": "HTTP/1.1 571 Not For You",
                        "Bad Request": "HTTP/1.1 400 Bad Request"}
 
-    def __init__(self, host_name, port, use_multiprocessing=False):
+    accepted_http_methods = ['GET', 'HEAD', 'POST']
+
+    def __init__(self, host_name, port, response_type, use_multiprocessing=False):
         import logging
         self.logger = logging.getLogger('server')
         logging.basicConfig(level=logging.INFO)
+
+        self.response_type = response_type
 
         self.use_multiprocessing = use_multiprocessing
         self.num_processes = mp.cpu_count()
@@ -73,12 +79,16 @@ class Server:
         logger.debug('starting connection: {}'.format(str(connection_socket)))
 
         decoded_request = request.decode()
-        requested_path, request_valid = self.determine_requested_path(decoded_request)
+        http_method, requested_path, request_valid = \
+            self.determine_http_method_and_path_and_request_validity(decoded_request)
         response_status = self.get_response_status(requested_path, request_valid)
-        if response_status == 'OK':
+        if response_status == 'OK' and http_method != 'HEAD':
             should_send_body = True
         else:
             should_send_body = False
+
+        # Get data sent along with POST request
+        data = self.determine_data_if_post_request(http_method, decoded_request)
 
         logger.debug('file requested: {}'.format(requested_path))
         header_response = self.generate_header(response_status, requested_path)
@@ -87,7 +97,7 @@ class Server:
         try:
             connection_socket.send(header_response.encode())
             if should_send_body:
-                self.send_response_body(requested_path, connection_socket)
+                connection_socket.send(self.response_type(http_method, requested_path, data).get_response())
         except OSError:
             logger.error('send interrupted')
 
@@ -96,16 +106,31 @@ class Server:
         logger.debug('closed connection: {}'.format(str(connection_socket)))
 
     @staticmethod
-    def determine_requested_path(request_header):
+    def determine_data_if_post_request(http_method, decoded_request):
+        if http_method == 'POST':
+            data_string = decoded_request.partition('\r\n\r\n')[2]
+            data = {}
+            for data_element in data_string.split('&'):
+                split_data_element = data_element.split('=')
+                data[urllib.parse.unquote_plus(split_data_element[0])] =\
+                    urllib.parse.unquote_plus(split_data_element[1])
+            return data
+        else:
+            return ''
+
+    @staticmethod
+    def determine_http_method_and_path_and_request_validity(request_header):
         first_line = request_header.partition('\n')[0]
         first_line_split = first_line.split(' ')
-        if first_line_split[0] != 'GET':
-            return '', False
-        path = first_line_split[1]
-        path = path[1:]
+        method = first_line_split[0]
+        try:
+            path = first_line_split[1]
+            path = path[1:]
+        except IndexError:
+            return method, '', False
         if path == '':
             path = 'index.html'
-        return path, True
+        return method, path, True
 
     @staticmethod
     def get_response_status(path, request_valid):
@@ -132,14 +157,3 @@ class Server:
         else:
             additional_header_lines = ''
         return status_line + additional_header_lines + '\r\n'
-
-    @staticmethod
-    def send_response_body(path, connection_socket):
-        with open(path, 'rb') as file:
-            connection_socket.send(file.read())
-
-
-processes = []
-if __name__ == '__main__':
-    server = Server('', 8080, use_multiprocessing=False)
-    server.start()
