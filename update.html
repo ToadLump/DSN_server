@@ -27,32 +27,40 @@
     </ul>
 
 <script>
-    function loadXMLDoc() {
-        var xmlhttp = new XMLHttpRequest();
+    const xmlhttp = new XMLHttpRequest();
+    function setUpXMLHTTP() {
         xmlhttp.onreadystatechange = function() {
             if (this.readyState === 4 && this.status === 200) {
-                myFunction(this);
+                displayStatusMessages(this);
             }
         };
+    }
+
+    function sendRequest() {
         xmlhttp.open("GET", "status.xml", true);
         xmlhttp.send();
     }
 
-    myFunction("status.xml");
-    function myFunction(xml) {
-        var i;
-        var xmlDoc = xml.responseXML;
-        var test = "<li>"+xml+"</li>";
-        // var x = xmlDoc.getElementsByTagName("status");
-        // for (i = 0; i < x.length; i++) {
-        //     table += "<tr><td>" +
-        //         x[i].getElementsByTagName("ARTIST")[0].childNodes[0].nodeValue +
-        //         "</td><td>" +
-        //         x[i].getElementsByTagName("TITLE")[0].childNodes[0].nodeValue +
-        //         "</td></tr>";
-        // }
-        document.getElementById("status_messages").innerHTML = test;
+    function displayStatusMessages(xml) {
+        const xmlDoc = xml.responseXML;
+        const statuses = xmlDoc.getElementsByTagName("status");
+        let status_li_items = "";
+        for (let i = 0; i < statuses.length; i++) {
+             status_li_items += "<li><ul><li>" +
+                 statuses[i].getElementsByTagName("status_text")[0].childNodes[0].nodeValue +
+                 "</li><li>" +
+                 statuses[i].getElementsByTagName("timestamp")[0].childNodes[0].nodeValue +
+                 "</li><li>Like Count: " +
+                 statuses[i].getElementsByTagName("likes")[0].childElementCount +
+                 "</li></ul></li>";
+        }
+        document.getElementById("status_messages").innerHTML = status_li_items;
     }
+
+    setUpXMLHTTP()
+    sendRequest()
+    // Rechecks the status.xml document, so that new likes can be seen without reloading
+    setInterval(sendRequest, 5000);
 </script>
 
 </body>

@@ -1,27 +1,82 @@
 <status_updates>
+    <status><timestamp>2020-04-02 14:11:35.955676</timestamp><status_text>radically Imperfect!</status_text><likes /></status><status><timestamp>9120-04-02 13:29:19.511585</timestamp><status_text>not bad!</status_text><likes /></status><status><timestamp>2020-04-02 13:29:12.446279</timestamp><status_text>afaf</status_text><likes /></status><status>
+        <timestamp>2020-04-02 13:24:14.238277</timestamp>
+        <status_text>hi?</status_text>
+        <likes />
+    </status>
+    <status>
+        <timestamp>2020-04-02 13:23:55.055120</timestamp>
+        <status_text>fasdfse</status_text>
+        <likes />
+    </status>
+    <status>
+        <timestamp>2020-04-02 13:22:44.438075</timestamp>
+        <status_text>fafafaeeNEWdfse</status_text>
+        <likes />
+    </status>
+    <status>
+        <timestamp>2050-04-02 13:19:06.003036</timestamp>
+        <status_text>it won't... why not? how to fix?</status_text>
+        <likes />
+    </status>
+    <status>
+        <timestamp>2020-04-02 13:18:46.415892</timestamp>
+        <status_text>it won't... why not? how to fix?</status_text>
+        <likes />
+    </status>
+    <status>
+        <timestamp>2020-04-02 13:13:14.787282</timestamp>
+        <status_text>it won't... why not? how to fix?</status_text>
+        <likes />
+    </status>
+    <status>
+        <timestamp>2030-04-02 13:08:45.845322</timestamp>
+        <status_text>Will it update on the hoof?</status_text>
+        <likes />
+    </status>
+    <status>
+        <timestamp>2020-04-02 13:05:23.319871</timestamp>
+        <status_text>Will it update on the hoof?</status_text>
+        <likes />
+    </status>
+    <status>
+        <timestamp>2020-04-02 13:04:59.766302</timestamp>
+        <status_text>What comes this way?</status_text>
+        <likes />
+    </status>
+    <status>
+        <timestamp>2020-04-02 13:04:52.850229</timestamp>
+        <status_text>Arrgh!</status_text>
+        <likes />
+    </status>
     <status>
         <timestamp>2020-04-01 15:40:59.066033</timestamp>
-        <status_text>Testing !@#!@#!@T5348959879283451</status_text>
-        <likes/>
+        <status_text>Testing21231231 !@#!@#!@T5348959879283451</status_text>
+        <likes>
+            <friend>
+                <name>Thomas Edison</name>
+                <ip_address>192.168.1.1</ip_address>
+            </friend>
+        </likes>
     </status>
     <status>
         <timestamp>2020-04-01 15:40:53.932343</timestamp>
         <status_text>Cabbages, are very fluffy....</status_text>
-        <likes/>
+        <likes />
     </status>
     <status>
         <timestamp>2020-04-01 15:40:45.906048</timestamp>
         <status_text>Potato!!!#@!#@!#</status_text>
-        <likes/>
+        <likes />
     </status>
     <status>
         <timestamp>2020-04-01 15:40:40.765000</timestamp>
         <status_text>HI!</status_text>
-        <likes/>
+        <likes />
     </status>
     <status>
         <timestamp>2020-04-01 15:36:58.797581</timestamp>
         <status_text>HI!</status_text>
-        <likes/>
+        <likes />
     </status>
 </status_updates>

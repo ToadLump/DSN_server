@@ -24,19 +24,21 @@ class DistributedSocialNetworkResponse:
         return response
 
     def update_status(self):
-        # Create New Status element
-        status_element = ET.Element('status')
-        timestamp_element = ET.SubElement(status_element, 'timestamp')
-        timestamp_element.text = str(datetime.now())
-        status_text_element = ET.SubElement(status_element, 'status_text')
-        status_text_element.text = self.data['status']
-        ET.SubElement(status_element, 'likes')
+        # Ensure no empty statuses are added
+        if self.data['status'] != '':
+            # Create New Status element
+            status_element = ET.Element('status')
+            timestamp_element = ET.SubElement(status_element, 'timestamp')
+            timestamp_element.text = str(datetime.now())
+            status_text_element = ET.SubElement(status_element, 'status_text')
+            status_text_element.text = self.data['status']
+            ET.SubElement(status_element, 'likes')
 
-        # Read status.xml and insert new status
-        status_xml = ET.parse('status.xml')
-        root = status_xml.getroot()
-        root.insert(0, status_element)
-        status_xml.write('status.xml')
+            # Read status.xml and insert new status
+            status_xml = ET.parse('status.xml')
+            root = status_xml.getroot()
+            root.insert(0, status_element)
+            status_xml.write('status.xml')
 
     def generate_friends_html(self):
         return self.get_unaltered_file()
