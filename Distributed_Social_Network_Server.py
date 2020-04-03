@@ -19,6 +19,8 @@ class DistributedSocialNetworkServer(Server):
         self.delete_cached_friend_info()
 
     def delete_cached_friend_info(self):
+        if not os.path.isdir(self.file_locations['cached_friend_data_dir']):
+            os.mkdir(self.file_locations['cached_friend_data_dir'])
         for filename in os.listdir(self.file_locations['cached_friend_data_dir']):
             file_path = os.path.join(self.file_locations['cached_friend_data_dir'], filename)
             try:
