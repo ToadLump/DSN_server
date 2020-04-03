@@ -40,3 +40,7 @@ ol li {
     font-size: smaller;
     color: blue;
 }
+
+.name {
+    font-weight: bold;
+}

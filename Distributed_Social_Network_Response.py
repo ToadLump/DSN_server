@@ -7,6 +7,16 @@ import pycurl
 import certifi
 
 
+class ServerUnavailableException(Exception):
+    def __str__(self):
+        return "Server Not Available Right Now"
+
+
+class NotFriendException(Exception):
+    def __str__(self):
+        return "Friendship Not Reciprocated"
+
+
 class DistributedSocialNetworkResponse:
     def __init__(self, http_method, path, data, port, file_locations):
         self.http_method = http_method
@@ -64,8 +74,12 @@ class DistributedSocialNetworkResponse:
             ip_address = friend.find('ip_address').text
 
             # Access friend server to access status info and profile picture
-            friend_status_element = self.get_friend_status_element(ip_address)
-            friend_profile_picture_path = self.update_friend_profile_picture(ip_address)
+            try:
+                friend_status_element = self.get_friend_status_element(ip_address)
+                friend_profile_picture_path = self.update_friend_profile_picture(ip_address)
+            except (NotFriendException, ServerUnavailableException) as e:
+                friend_status_element = self.get_exception_status_element(str(e))
+                friend_profile_picture_path = 'profile-blank.jpg'
 
             # Add profile picture
             picture_li_element = ET.SubElement(friend_ul_element, 'li')
@@ -96,13 +110,15 @@ class DistributedSocialNetworkResponse:
     def get_friend_status_element(self, ip_address):
         friend_statuses_xml_string = self.request_friend_data(ip_address,
                                                               self.file_locations['status_file']).decode('UTF-8')
+        if friend_statuses_xml_string == '':
+            return ''
         friend_latest_statuses_xml = ET.fromstring(friend_statuses_xml_string)
         friend_latest_status = friend_latest_statuses_xml[0]
         return friend_latest_status
 
     def update_friend_profile_picture(self, ip_address):
         friend_profile_picture_data = self.request_friend_data(ip_address, 'profilePicture.jpg')
-        friend_profile_picture_file_path = '{friend_cache_dir}}/{ip_address}_profilePicture.jpg'\
+        friend_profile_picture_file_path = '{friend_cache_dir}/{ip_address}_profilePicture.jpg'\
             .format(friend_cache_dir=self.file_locations['cached_friend_data_dir'], ip_address=ip_address)
         with open(friend_profile_picture_file_path, 'wb') as file:
             file.write(friend_profile_picture_data)
@@ -113,15 +129,42 @@ class DistributedSocialNetworkResponse:
                                                               port=self.port,
                                                               file_path=file_path)
         response_buffer = BytesIO()
+        header_buffer = BytesIO()
         curl = pycurl.Curl()
         curl.setopt(pycurl.CAINFO, certifi.where())
         curl.setopt(pycurl.URL, url)
+        curl.setopt(pycurl.TIMEOUT, 1)
         curl.setopt(curl.WRITEFUNCTION, response_buffer.write)
-        curl.perform()
+        curl.setopt(curl.HEADERFUNCTION, header_buffer.write)
+        try:
+            curl.perform()
+        except pycurl.error:
+            raise ServerUnavailableException
         curl.close()
+        header_data = header_buffer.getvalue()
         friend_data = response_buffer.getvalue()
         response_buffer.close()
+        header_buffer.close()
+        self.check_header(header_data)
         return friend_data
+
+    @staticmethod
+    def check_header(header):
+        header_str = header.decode('UTF-8')
+        if "Friendship not reciprocated" in header_str:
+            raise NotFriendException
+
+    @staticmethod
+    def get_exception_status_element(status_text):
+        status_node = ET.fromstring("""
+        <status>
+        <timestamp></timestamp>
+        <status_text></status_text>
+        <likes />
+        </status>
+        """)
+        status_node.find("status_text").text = status_text
+        return status_node
 
     def get_response(self):
         return self.response
