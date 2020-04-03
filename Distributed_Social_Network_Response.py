@@ -1,6 +1,10 @@
 import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from io import BytesIO
+
+import pycurl
+import certifi
 
 
 class DistributedSocialNetworkResponse:
@@ -85,17 +89,32 @@ class DistributedSocialNetworkResponse:
         return all_friends_ul_element
 
     def get_friend_status_element(self, ip_address):
-        # FIXME: this is just a placeholder
-        return ET.fromstring("""
-            <status>
-                <timestamp>2020-04-02 13:23:55.055120</timestamp>
-                <status_text>fasdfse</status_text>
-                <likes />
-            </status>
-        """)
+        friend_statuses_xml_string = self.request_friend_data(ip_address, 'status.xml').decode('UTF-8')
+        friend_latest_statuses_xml = ET.fromstring(friend_statuses_xml_string)
+        friend_latest_status = friend_latest_statuses_xml[0]
+        return friend_latest_status
 
     def update_friend_profile_picture(self, ip_address):
-        return "cached_friend_profile_information/profilePicture.jpg"
+        friend_profile_picture_data = self.request_friend_data(ip_address, 'profilePicture.jpg')
+        friend_profile_picture_file_path = 'cached_friend_profile_information/{ip_address}_profilePicture.jpg'
+        with open(friend_profile_picture_file_path, 'wb') as file:
+            file.write(friend_profile_picture_data)
+        return friend_profile_picture_file_path
+
+    def request_friend_data(self, ip_address, file_path):
+        url = "http://{ip_address}:{port}/{file_path}".format(ip_address=ip_address,
+                                                              port=self.port,
+                                                              file_path=file_path)
+        response_buffer = BytesIO()
+        curl = pycurl.Curl()
+        curl.setopt(pycurl.CAINFO, certifi.where())
+        curl.setopt(pycurl.URL, url)
+        curl.setopt(curl.WRITEFUNCTION, response_buffer.write)
+        curl.perform()
+        curl.close()
+        friend_data = response_buffer.getvalue()
+        response_buffer.close()
+        return friend_data
 
     def get_response(self):
         return self.response
