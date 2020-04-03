@@ -4,10 +4,11 @@ from datetime import datetime
 
 
 class DistributedSocialNetworkResponse:
-    def __init__(self, http_method, path, data):
+    def __init__(self, http_method, path, data, port=8080):
         self.http_method = http_method
         self.path = path
         self.data = data
+        self.port = port
 
         basename = os.path.basename(self.path)
         if basename == 'update.html' and http_method == 'POST':
@@ -41,7 +42,60 @@ class DistributedSocialNetworkResponse:
             status_xml.write('status.xml')
 
     def generate_friends_html(self):
-        return self.get_unaltered_file()
+        friends_list_node = self.generate_friends_list_node()
+
+        html_dom = ET.parse(self.path)
+        root = html_dom.getroot()
+        root.find(".//div[@id='friends_info']").append(friends_list_node)
+        html_string = ET.tostring(root, encoding='UTF-8', method='html')
+        return html_string
+
+    def generate_friends_list_node(self):
+        all_friends_ul_element = ET.Element('ul')
+        friends_xml = ET.parse('friends.xml')
+        for friend in friends_xml.findall('friend'):
+            friend_ul_element = ET.SubElement(all_friends_ul_element, 'ul')
+
+            ip_address = friend.find('ip_address').text
+
+            # Access friend server to access status info and profile picture
+            friend_status_element = self.get_friend_status_element(ip_address)
+            friend_profile_picture_path = self.update_friend_profile_picture(ip_address)
+
+            # Add profile picture
+            picture_li_element = ET.SubElement(friend_ul_element, 'li')
+            picture_img_element = ET.SubElement(picture_li_element, 'img')
+            picture_img_element.attrib = {'src': friend_profile_picture_path, 'alt': "profile picture"}
+
+            # Add name element
+            name_li_element = ET.SubElement(friend_ul_element, 'li')
+            name_li_element.text = friend.find('name').text
+
+            # Add status text
+            status_li_element = ET.SubElement(friend_ul_element, 'li')
+            status_li_element.text = friend_status_element.find('status_text').text
+
+            # Add timestamp
+            timestamp_li_element = ET.SubElement(friend_ul_element, 'li')
+            timestamp_li_element.text = friend_status_element.find('timestamp').text
+
+            # Add likes count
+            likes_li_element = ET.SubElement(friend_ul_element, 'li')
+            likes_li_element.text = "Likes: {}".format(len(list(friend_status_element.find('likes'))))
+        return all_friends_ul_element
+
+    def get_friend_status_element(self, ip_address):
+        # FIXME: this is just a placeholder
+        return ET.fromstring("""
+            <status>
+                <timestamp>2020-04-02 13:23:55.055120</timestamp>
+                <status_text>fasdfse</status_text>
+                <likes />
+            </status>
+        """)
+
+    def update_friend_profile_picture(self, ip_address):
+        return "cached_friend_profile_information/profilePicture.jpg"
 
     def get_response(self):
         return self.response

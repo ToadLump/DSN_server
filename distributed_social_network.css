@@ -16,3 +16,16 @@ ol li {
     padding-left: 0;
     padding-bottom: 2em;
 }
+
+#friends_info ul {
+    margin-left: 0;
+    padding-left: 0;
+    list-style-type: none;
+    padding-bottom: 2em;
+}
+
+#friends_info img {
+    border-radius: 8px;
+    max-width: 20em;
+    height: auto;
+}
