@@ -98,8 +98,8 @@ class DistributedSocialNetworkResponse:
 
     def update_friend_profile_picture(self, ip_address):
         friend_profile_picture_data = self.request_friend_data(ip_address, 'profilePicture.jpg')
-        friend_profile_picture_file_path = 'cached_friend_profile_information/{ip_address}_profilePicture.jpg'\
-            .format(ip_address=ip_address)
+        friend_profile_picture_file_path = '{friend_cache_dir}}/{ip_address}_profilePicture.jpg'\
+            .format(friend_cache_dir=self.file_locations['cached_friend_data_dir'], ip_address=ip_address)
         with open(friend_profile_picture_file_path, 'wb') as file:
             file.write(friend_profile_picture_data)
         return friend_profile_picture_file_path
