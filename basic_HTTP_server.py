@@ -1,16 +1,8 @@
-# Here is a skeleton code you may use as a starting point.
-# This is a very basic HTTP server which listens on port 8080,
-# and serves the same response messages regardless of the browser's request.
-# It runs on python v3
-# Usage: execute this program, open your browser (preferably chrome) and type http://servername:8080
-# e.g. if server.py and browser are running on the same machine, then use http://localhost:8080
-# Import the required libraries
 from socket import *
 import multiprocessing as mp
 import os.path
 import mimetypes
 import urllib.parse
-from Distributed_Social_Network_Response import DistributedSocialNetworkResponse as DSN_Response
 
 
 class Server:
@@ -21,12 +13,10 @@ class Server:
 
     accepted_http_methods = ['GET', 'HEAD', 'POST']
 
-    def __init__(self, host_name, port, response_type, use_multiprocessing=False):
+    def __init__(self, host_name, port, use_multiprocessing=False):
         import logging
         self.logger = logging.getLogger('server')
         logging.basicConfig(level=logging.INFO)
-
-        self.response_type = response_type
 
         self.use_multiprocessing = use_multiprocessing
         self.num_processes = mp.cpu_count()
@@ -54,18 +44,18 @@ class Server:
         while True:
             connection, address = self.server_socket.accept()
             self.logger.debug("Got connection")
-            self.respond_to_request(connection)
+            self.respond_to_request(connection, address)
 
     def handle_with_multiprocessing(self):
         while True:
             connection, address = self.server_socket.accept()
             self.logger.debug("Got connection")
-            process = mp.Process(target=self.respond_to_request, args=(connection,))
+            process = mp.Process(target=self.respond_to_request, args=(connection, address))
             process.daemon = True
             process.start()
             self.logger.debug("Started process %r", process)
 
-    def respond_to_request(self, connection_socket):
+    def respond_to_request(self, connection_socket, address):
         # Retrieve the message sent by the client
         request = connection_socket.recv(1024)
 
@@ -81,7 +71,7 @@ class Server:
         decoded_request = request.decode()
         http_method, requested_path, request_valid = \
             self.determine_http_method_and_path_and_request_validity(decoded_request)
-        response_status = self.get_response_status(requested_path, request_valid)
+        response_status = self.get_response_status(requested_path, request_valid, address[0])
         if response_status == 'OK' and http_method != 'HEAD':
             should_send_body = True
         else:
@@ -97,13 +87,20 @@ class Server:
         try:
             connection_socket.send(header_response.encode())
             if should_send_body:
-                connection_socket.send(self.response_type(http_method, requested_path, data).get_response())
+                connection_socket.send(self.determine_response_body(http_method,
+                                                                    requested_path,
+                                                                    data))
         except OSError:
             logger.error('send interrupted')
 
         # Close the connection
         connection_socket.close()
         logger.debug('closed connection: {}'.format(str(connection_socket)))
+
+    def determine_response_body(self, http_method, requested_path, data):
+        with open(requested_path, 'rb') as file:
+            response = file.read()
+        return response
 
     @staticmethod
     def determine_data_if_post_request(http_method, decoded_request):
@@ -112,7 +109,7 @@ class Server:
             data = {}
             for data_element in data_string.split('&'):
                 split_data_element = data_element.split('=')
-                data[urllib.parse.unquote_plus(split_data_element[0])] =\
+                data[urllib.parse.unquote_plus(split_data_element[0])] = \
                     urllib.parse.unquote_plus(split_data_element[1])
             return data
         else:
@@ -132,8 +129,7 @@ class Server:
             path = 'index.html'
         return method, path, True
 
-    @staticmethod
-    def get_response_status(path, request_valid):
+    def get_response_status(self, path, request_valid, address):
         if not request_valid:
             return 'Bad Request'
         if os.path.exists(path):

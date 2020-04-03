@@ -1,6 +1,5 @@
-from basic_HTTP_server import Server
-from Distributed_Social_Network_Response import DistributedSocialNetworkResponse as DSN_response
+from Distributed_Social_Network_Server import DistributedSocialNetworkServer as DSNServer
 
 if __name__ == '__main__':
-    server = Server('', 8080, DSN_response, use_multiprocessing=False)
+    server = DSNServer('', 8080, use_multiprocessing=False)
     server.start()

@@ -8,10 +8,11 @@ import certifi
 
 
 class DistributedSocialNetworkResponse:
-    def __init__(self, http_method, path, data, port=8080):
+    def __init__(self, http_method, path, data, port, file_locations):
         self.http_method = http_method
         self.path = path
         self.data = data
+        self.file_locations = file_locations
         self.port = port
 
         basename = os.path.basename(self.path)
@@ -39,11 +40,11 @@ class DistributedSocialNetworkResponse:
             status_text_element.text = self.data['status']
             ET.SubElement(status_element, 'likes')
 
-            # Read status.xml and insert new status
-            status_xml = ET.parse('status.xml')
+            # Read status file and insert new status
+            status_xml = ET.parse(self.file_locations['status_file'])
             root = status_xml.getroot()
             root.insert(0, status_element)
-            status_xml.write('status.xml')
+            status_xml.write(self.file_locations['status_file'])
 
     def generate_friends_html(self):
         friends_list_node = self.generate_friends_list_node()
@@ -56,7 +57,7 @@ class DistributedSocialNetworkResponse:
 
     def generate_friends_list_node(self):
         all_friends_ul_element = ET.Element('ul')
-        friends_xml = ET.parse('friends.xml')
+        friends_xml = ET.parse(self.file_locations['friends_file'])
         for friend in friends_xml.findall('friend'):
             friend_ul_element = ET.SubElement(all_friends_ul_element, 'ul')
 
@@ -89,14 +90,16 @@ class DistributedSocialNetworkResponse:
         return all_friends_ul_element
 
     def get_friend_status_element(self, ip_address):
-        friend_statuses_xml_string = self.request_friend_data(ip_address, 'status.xml').decode('UTF-8')
+        friend_statuses_xml_string = self.request_friend_data(ip_address,
+                                                              self.file_locations['status_file']).decode('UTF-8')
         friend_latest_statuses_xml = ET.fromstring(friend_statuses_xml_string)
         friend_latest_status = friend_latest_statuses_xml[0]
         return friend_latest_status
 
     def update_friend_profile_picture(self, ip_address):
         friend_profile_picture_data = self.request_friend_data(ip_address, 'profilePicture.jpg')
-        friend_profile_picture_file_path = 'cached_friend_profile_information/{ip_address}_profilePicture.jpg'
+        friend_profile_picture_file_path = 'cached_friend_profile_information/{ip_address}_profilePicture.jpg'\
+            .format(ip_address=ip_address)
         with open(friend_profile_picture_file_path, 'wb') as file:
             file.write(friend_profile_picture_data)
         return friend_profile_picture_file_path
