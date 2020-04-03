@@ -74,18 +74,22 @@ class DistributedSocialNetworkResponse:
 
             # Add name element
             name_li_element = ET.SubElement(friend_ul_element, 'li')
+            name_li_element.attrib = {'class': 'name'}
             name_li_element.text = friend.find('name').text
 
             # Add status text
             status_li_element = ET.SubElement(friend_ul_element, 'li')
+            status_li_element.attrib = {'class': 'status_text'}
             status_li_element.text = friend_status_element.find('status_text').text
 
             # Add timestamp
             timestamp_li_element = ET.SubElement(friend_ul_element, 'li')
+            timestamp_li_element.attrib = {'class': 'timestamp'}
             timestamp_li_element.text = friend_status_element.find('timestamp').text
 
             # Add likes count
             likes_li_element = ET.SubElement(friend_ul_element, 'li')
+            likes_li_element.attrib = {'class': 'likes'}
             likes_li_element.text = "Likes: {}".format(len(list(friend_status_element.find('likes'))))
         return all_friends_ul_element
 

@@ -46,11 +46,11 @@
         const statuses = xmlDoc.getElementsByTagName("status");
         let status_li_items = "";
         for (let i = 0; i < statuses.length; i++) {
-             status_li_items += "<li><ul><li>" +
+             status_li_items += "<li><ul><li class='status_text'>" +
                  statuses[i].getElementsByTagName("status_text")[0].childNodes[0].nodeValue +
-                 "</li><li>" +
+                 "</li><li class='timestamp'>" +
                  statuses[i].getElementsByTagName("timestamp")[0].childNodes[0].nodeValue +
-                 "</li><li>Like Count: " +
+                 "</li><li class='likes'>Likes: " +
                  statuses[i].getElementsByTagName("likes")[0].childElementCount +
                  "</li></ul></li>";
         }
