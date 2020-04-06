@@ -44,9 +44,10 @@ class DistributedSocialNetworkServer(Server):
             return False
         return True
 
-    def determine_response_body(self, http_method, requested_path, data):
+    def determine_response_body(self, http_method, requested_path, ip_address, data):
         return DSN_response(http_method,
                             requested_path,
+                            ip_address,
                             data,
                             self.serverPort,
                             self.file_locations).get_response()

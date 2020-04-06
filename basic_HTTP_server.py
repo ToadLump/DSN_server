@@ -89,6 +89,7 @@ class Server:
             if should_send_body:
                 connection_socket.send(self.determine_response_body(http_method,
                                                                     requested_path,
+                                                                    address,
                                                                     data))
         except OSError:
             logger.error('send interrupted')
@@ -97,7 +98,7 @@ class Server:
         connection_socket.close()
         logger.debug('closed connection: {}'.format(str(connection_socket)))
 
-    def determine_response_body(self, http_method, requested_path, data):
+    def determine_response_body(self, http_method, requested_path, ip_address, data):
         with open(requested_path, 'rb') as file:
             response = file.read()
         return response
