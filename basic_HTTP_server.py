@@ -89,7 +89,7 @@ class Server:
             if should_send_body:
                 connection_socket.send(self.determine_response_body(http_method,
                                                                     requested_path,
-                                                                    address,
+                                                                    address[0],
                                                                     data))
         except OSError:
             logger.error('send interrupted')

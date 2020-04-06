@@ -35,9 +35,13 @@ class DistributedSocialNetworkResponse:
             if http_method == 'POST':
                 if 'ip_address' in self.data:
                     self.inform_friend_server_about_like()
+                    self.response = self.generate_friends_html()
                 else:
                     self.add_like_to_status()
-            self.response = self.generate_friends_html()
+                    # this response will not get used
+                    self.response = self.get_unaltered_file()
+            else:
+                self.response = self.generate_friends_html()
         else:
             self.response = self.get_unaltered_file()
 
@@ -79,6 +83,7 @@ class DistributedSocialNetworkResponse:
             friend_ul_element = ET.SubElement(all_friends_ul_element, 'ul')
 
             ip_address = friend.find('ip_address').text
+            server_available = True
 
             # Access friend server to access status info and profile picture
             try:
@@ -87,6 +92,7 @@ class DistributedSocialNetworkResponse:
             except (NotFriendException, ServerUnavailableException) as e:
                 friend_status_element = self.get_exception_status_element(str(e))
                 friend_profile_picture_path = 'profile-blank.jpg'
+                server_available = False
 
             # Add profile picture
             picture_li_element = ET.SubElement(friend_ul_element, 'li')
@@ -103,32 +109,33 @@ class DistributedSocialNetworkResponse:
             status_li_element.attrib = {'class': 'status_text'}
             status_li_element.text = friend_status_element.find('status_text').text
 
-            # Add timestamp
-            timestamp_li_element = ET.SubElement(friend_ul_element, 'li')
-            timestamp_li_element.attrib = {'class': 'timestamp'}
-            timestamp = friend_status_element.find('timestamp').text
-            timestamp_li_element.text = timestamp
+            if server_available:
+                # Add timestamp
+                timestamp_li_element = ET.SubElement(friend_ul_element, 'li')
+                timestamp_li_element.attrib = {'class': 'timestamp'}
+                timestamp = friend_status_element.find('timestamp').text
+                timestamp_li_element.text = timestamp
 
-            # Add likes count
-            likes_li_element = ET.SubElement(friend_ul_element, 'li')
-            likes_li_element.attrib = {'class': 'likes'}
-            likes_li_element.text = "Likes: {}".format(len(list(friend_status_element.find('likes'))))
+                # Add likes count
+                likes_li_element = ET.SubElement(friend_ul_element, 'li')
+                likes_li_element.attrib = {'class': 'likes'}
+                likes_li_element.text = "Likes: {}".format(len(list(friend_status_element.find('likes'))))
 
-            # Add like button
-            like_button_li_element = ET.SubElement(friend_ul_element, 'li')
-            like_button_form_element = ET.SubElement(like_button_li_element, 'form')
-            like_button_form_element.attrib = {'action': 'friends.html', 'method': 'POST'}
-            like_button_hidden_ip_address_element = ET.SubElement(like_button_form_element, 'input')
-            like_button_hidden_ip_address_element.attrib = {'type': 'hidden', 'name': 'ip_address', 'value': ip_address}
-            like_button_hidden_timestamp_element = ET.SubElement(like_button_form_element, 'input')
-            like_button_hidden_timestamp_element.attrib = {'type': 'hidden', 'name': 'timestamp', 'value': timestamp}
-            like_button_button_element = ET.SubElement(like_button_form_element, 'input')
-            should_disable = self.disable_if_already_liked(friend_status_element.find('likes'), ip_address)
-            like_button_attributes = {'type': 'submit', 'name': 'like',
-                                      'value': 'like'}
-            # Disable like button if this user has already liked the status
-            like_button_attributes.update(should_disable)
-            like_button_button_element.attrib = like_button_attributes
+                # Add like button
+                like_button_li_element = ET.SubElement(friend_ul_element, 'li')
+                like_button_form_element = ET.SubElement(like_button_li_element, 'form')
+                like_button_form_element.attrib = {'action': 'friends.html', 'method': 'POST'}
+                like_button_hidden_ip_address_element = ET.SubElement(like_button_form_element, 'input')
+                like_button_hidden_ip_address_element.attrib = {'type': 'hidden', 'name': 'ip_address', 'value': ip_address}
+                like_button_hidden_timestamp_element = ET.SubElement(like_button_form_element, 'input')
+                like_button_hidden_timestamp_element.attrib = {'type': 'hidden', 'name': 'timestamp', 'value': timestamp}
+                like_button_button_element = ET.SubElement(like_button_form_element, 'input')
+                should_disable = self.disable_if_already_liked(friend_status_element.find('likes'), ip_address)
+                like_button_attributes = {'type': 'submit', 'name': 'like',
+                                          'value': 'like'}
+                # Disable like button if this user has already liked the status
+                like_button_attributes.update(should_disable)
+                like_button_button_element.attrib = like_button_attributes
 
         return all_friends_ul_element
 
@@ -218,12 +225,12 @@ class DistributedSocialNetworkResponse:
     def add_like_to_status(self):
         # Read friends file to determine which friend liked the status
         friends_xml = ET.parse(self.file_locations['friends_file'])
-        liking_friend_element = friends_xml.find('.//friend[ip_address={}]'.format(self.ip_address))
+        liking_friend_element = friends_xml.find(".//friend[ip_address='{}']".format(self.ip_address))
 
         # Read status file and insert like information
         status_xml = ET.parse(self.file_locations['status_file'])
-        liked_status = status_xml.find(".//status[timestamp={}]".format(self.data['timestamp']))
-        liked_status.insert(0, liking_friend_element)
+        liked_status = status_xml.find(".//status[timestamp='{}']".format(self.data['timestamp']))
+        liked_status.find('likes').insert(0, liking_friend_element)
         status_xml.write(self.file_locations['status_file'])
 
     def get_response(self):
