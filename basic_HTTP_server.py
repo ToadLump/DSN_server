@@ -106,9 +106,8 @@ class Server:
     @staticmethod
     def determine_data_if_post_request(http_method, decoded_request, connection_socket):
         if http_method == 'POST':
-            try:
-                data_string = decoded_request.partition('\r\n\r\n')[2]
-            except IndexError:
+            data_string = decoded_request.partition('\r\n\r\n')[2]
+            if data_string == '':
                 # Data was not received, try again. Safari browser requires this.
                 data_string = connection_socket.recv(1024).decode()
             data = {}
