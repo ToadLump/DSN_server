@@ -78,7 +78,7 @@ class Server:
             should_send_body = False
 
         # Get data sent along with POST request
-        data = self.determine_data_if_post_request(http_method, decoded_request)
+        data = self.determine_data_if_post_request(http_method, decoded_request, connection_socket)
 
         logger.debug('file requested: {}'.format(requested_path))
         header_response = self.generate_header(response_status, requested_path)
@@ -104,9 +104,13 @@ class Server:
         return response
 
     @staticmethod
-    def determine_data_if_post_request(http_method, decoded_request):
+    def determine_data_if_post_request(http_method, decoded_request, connection_socket):
         if http_method == 'POST':
-            data_string = decoded_request.partition('\r\n\r\n')[2]
+            try:
+                data_string = decoded_request.partition('\r\n\r\n')[2]
+            except IndexError:
+                # Data was not received, try again. Safari browser requires this.
+                data_string = connection_socket.recv(1024).decode()
             data = {}
             for data_element in data_string.split('&'):
                 split_data_element = data_element.split('=')

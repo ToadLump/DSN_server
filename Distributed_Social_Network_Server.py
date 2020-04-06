@@ -12,6 +12,7 @@ class DistributedSocialNetworkServer(Server):
         self.file_locations = {
             'friends_file': 'friends.xml',
             'status_file': 'status.xml',
+            'profile_picture': 'profilePicture.jpg',
             'cached_friend_data_dir': 'cached_friend_profile_information'
         }
 

@@ -83,7 +83,7 @@ class DistributedSocialNetworkResponse:
             friend_ul_element = ET.SubElement(all_friends_ul_element, 'ul')
 
             ip_address = friend.find('ip_address').text
-            server_available = True
+            friend_server_available = True
 
             # Access friend server to access status info and profile picture
             try:
@@ -92,52 +92,55 @@ class DistributedSocialNetworkResponse:
             except (NotFriendException, ServerUnavailableException) as e:
                 friend_status_element = self.get_exception_status_element(str(e))
                 friend_profile_picture_path = 'profile-blank.jpg'
-                server_available = False
+                friend_server_available = False
 
             # Add profile picture
             picture_li_element = ET.SubElement(friend_ul_element, 'li')
             picture_img_element = ET.SubElement(picture_li_element, 'img')
             picture_img_element.attrib = {'src': friend_profile_picture_path, 'alt': "profile picture"}
 
-            # Add name element
-            name_li_element = ET.SubElement(friend_ul_element, 'li')
-            name_li_element.attrib = {'class': 'name'}
-            name_li_element.text = friend.find('name').text
+            # Add name
+            self.add_friend_data_li(friend, friend_ul_element, 'name')
 
             # Add status text
-            status_li_element = ET.SubElement(friend_ul_element, 'li')
-            status_li_element.attrib = {'class': 'status_text'}
-            status_li_element.text = friend_status_element.find('status_text').text
+            self.add_friend_data_li(friend_status_element, friend_ul_element, 'status_text')
 
-            if server_available:
+            if friend_server_available:
                 # Add timestamp
-                timestamp_li_element = ET.SubElement(friend_ul_element, 'li')
-                timestamp_li_element.attrib = {'class': 'timestamp'}
-                timestamp = friend_status_element.find('timestamp').text
-                timestamp_li_element.text = timestamp
+                timestamp = self.add_friend_data_li(friend_status_element, friend_ul_element, 'timestamp')
 
                 # Add likes count
                 likes_li_element = ET.SubElement(friend_ul_element, 'li')
                 likes_li_element.attrib = {'class': 'likes'}
                 likes_li_element.text = "Likes: {}".format(len(list(friend_status_element.find('likes'))))
 
-                # Add like button
-                like_button_li_element = ET.SubElement(friend_ul_element, 'li')
-                like_button_form_element = ET.SubElement(like_button_li_element, 'form')
-                like_button_form_element.attrib = {'action': 'friends.html', 'method': 'POST'}
-                like_button_hidden_ip_address_element = ET.SubElement(like_button_form_element, 'input')
-                like_button_hidden_ip_address_element.attrib = {'type': 'hidden', 'name': 'ip_address', 'value': ip_address}
-                like_button_hidden_timestamp_element = ET.SubElement(like_button_form_element, 'input')
-                like_button_hidden_timestamp_element.attrib = {'type': 'hidden', 'name': 'timestamp', 'value': timestamp}
-                like_button_button_element = ET.SubElement(like_button_form_element, 'input')
-                should_disable = self.disable_if_already_liked(friend_status_element.find('likes'), ip_address)
-                like_button_attributes = {'type': 'submit', 'name': 'like',
-                                          'value': 'like'}
-                # Disable like button if this user has already liked the status
-                like_button_attributes.update(should_disable)
-                like_button_button_element.attrib = like_button_attributes
+                self.add_like_button(friend_status_element, friend_ul_element, ip_address, timestamp)
 
         return all_friends_ul_element
+
+    @staticmethod
+    def add_friend_data_li(element_to_pull_info_from, ul_to_add_to, xpath_to_relevant_element):
+        status_li_element = ET.SubElement(ul_to_add_to, 'li')
+        status_li_element.attrib = {'class': xpath_to_relevant_element}
+        node_text = element_to_pull_info_from.find(xpath_to_relevant_element).text
+        status_li_element.text = node_text
+        return node_text
+
+    def add_like_button(self, friend_status_element, friend_ul_element, ip_address, timestamp):
+        like_button_li_element = ET.SubElement(friend_ul_element, 'li')
+        like_button_form_element = ET.SubElement(like_button_li_element, 'form')
+        like_button_form_element.attrib = {'action': 'friends.html', 'method': 'POST'}
+        like_button_hidden_ip_address_element = ET.SubElement(like_button_form_element, 'input')
+        like_button_hidden_ip_address_element.attrib = {'type': 'hidden', 'name': 'ip_address', 'value': ip_address}
+        like_button_hidden_timestamp_element = ET.SubElement(like_button_form_element, 'input')
+        like_button_hidden_timestamp_element.attrib = {'type': 'hidden', 'name': 'timestamp', 'value': timestamp}
+        like_button_button_element = ET.SubElement(like_button_form_element, 'input')
+        should_disable = self.disable_if_already_liked(friend_status_element.find('likes'), ip_address)
+        like_button_attributes = {'type': 'submit', 'name': 'like',
+                                  'value': 'like'}
+        # Disable like button if this user has already liked the status
+        like_button_attributes.update(should_disable)
+        like_button_button_element.attrib = like_button_attributes
 
     def get_friend_status_element(self, ip_address):
         friend_statuses_xml_string = self.request_friend_data(ip_address,
@@ -149,8 +152,8 @@ class DistributedSocialNetworkResponse:
         return friend_latest_status
 
     def update_friend_profile_picture(self, ip_address):
-        friend_profile_picture_data = self.request_friend_data(ip_address, 'profilePicture.jpg')
-        friend_profile_picture_file_path = '{friend_cache_dir}/{ip_address}_profilePicture.jpg' \
+        friend_profile_picture_data = self.request_friend_data(ip_address, self.file_locations['profile_picture'])
+        friend_profile_picture_file_path = '{friend_cache_dir}/{ip_address}_profile_picture.jpg' \
             .format(friend_cache_dir=self.file_locations['cached_friend_data_dir'], ip_address=ip_address)
         with open(friend_profile_picture_file_path, 'wb') as file:
             file.write(friend_profile_picture_data)
