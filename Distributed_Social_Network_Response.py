@@ -3,7 +3,9 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from io import BytesIO
 from urllib.parse import urlencode
+import logging
 
+import socket
 import pycurl
 import certifi
 
@@ -27,6 +29,9 @@ class DistributedSocialNetworkResponse:
         self.file_locations = file_locations
         self.port = port
 
+        self.logger = logging.getLogger('response')
+        logging.basicConfig(level=logging.INFO)
+
         basename = os.path.basename(self.path)
         if basename == 'update.html' and http_method == 'POST':
             self.update_status()
@@ -39,7 +44,7 @@ class DistributedSocialNetworkResponse:
                 else:
                     self.add_like_to_status()
                     # this response will not get used
-                    self.response = self.get_unaltered_file()
+                    self.response = b''
             else:
                 self.response = self.generate_friends_html()
         else:
@@ -201,18 +206,32 @@ class DistributedSocialNetworkResponse:
         status_node.find("status_text").text = status_text
         return status_node
 
-    def disable_if_already_liked(self, likes_element, ip_address):
-        # TODO: Make this actually work
-        # return {'disabled': 'disabled'}
-        return {}
+    def disable_if_already_liked(self, likes_element, friend_ip_address):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect((friend_ip_address, self.port))
+        # Get the ip address that the friend server sees this computer as
+        my_ip_address = s.getsockname()[0]
+        s.close()
+
+        if self.is_ip_address_in_element(my_ip_address, likes_element):
+            return {'disabled': 'disabled'}
+        else:
+            return {}
+
+    @staticmethod
+    def is_ip_address_in_element(ip_address, element):
+        return ip_address in [ip_address_element.text for ip_address_element in element.findall('.//ip_address')]
 
     def inform_friend_server_about_like(self):
+        # sending the data to the ip address listed, and then removing that address from the data sent
+        # this is an implicit way of telling the servers which one is sending and which is receiving the like
         url = "http://{ip_address}:{port}/{file_path}".format(ip_address=self.data.pop('ip_address'),
                                                               port=self.port,
                                                               file_path='friends.html')
         curl = pycurl.Curl()
         curl.setopt(pycurl.CAINFO, certifi.where())
         curl.setopt(pycurl.URL, url)
+        curl.setopt(pycurl.TIMEOUT, 1)
 
         post_data = self.data
         # Form data must be provided already urlencoded.
@@ -221,8 +240,10 @@ class DistributedSocialNetworkResponse:
         # Content-Type header to application/x-www-form-urlencoded
         # and data to send in request body.
         curl.setopt(curl.POSTFIELDS, post_fields)
-
-        curl.perform()
+        try:
+            curl.perform()
+        except pycurl.error:
+            self.logger.info('the server the user requested to like is unavailable')
         curl.close()
 
     def add_like_to_status(self):
@@ -232,9 +253,13 @@ class DistributedSocialNetworkResponse:
 
         # Read status file and insert like information
         status_xml = ET.parse(self.file_locations['status_file'])
+        # Uses timestamp to determine if the correct status is being liked
         liked_status = status_xml.find(".//status[timestamp='{}']".format(self.data['timestamp']))
-        liked_status.find('likes').insert(0, liking_friend_element)
-        status_xml.write(self.file_locations['status_file'])
+        # Only write like into status file if it is the first like from that friend - avoids resubmitted form
+        # from adding additional like before button is disabled
+        if not self.is_ip_address_in_element(self.ip_address, liked_status.find('likes')):
+            liked_status.find('likes').insert(0, liking_friend_element)
+            status_xml.write(self.file_locations['status_file'])
 
     def get_response(self):
         return self.response

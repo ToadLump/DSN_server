@@ -1,5 +1,25 @@
 <status_updates>
-    <status><timestamp>2020-04-03 15:58:25.628332</timestamp><status_text>that worked fine</status_text><likes /></status><status><timestamp>2020-04-03 15:58:16.286252</timestamp><status_text>testing on chrome</status_text><likes /></status><status><timestamp>2020-04-03 15:56:05.771330</timestamp><status_text>humph</status_text><likes /></status><status><timestamp>2020-04-03 15:16:50.656438</timestamp><status_text>hello?</status_text><likes /></status><status><timestamp>2020-04-03 15:16:46.138816</timestamp><status_text>still working?</status_text><likes /></status><status><timestamp>2020-04-03 14:44:29.054254</timestamp><status_text>what?</status_text><likes /></status><status><timestamp>2020-04-03 14:44:24.072345</timestamp><status_text>hello</status_text><likes /></status><status><timestamp>2020-04-03 14:44:08.474172</timestamp><status_text>radical Rabbit!</status_text><likes /></status><status><timestamp>2020-04-03 14:33:18.099245</timestamp><status_text>radical Rabbit!</status_text><likes /></status><status><timestamp>2020-04-03 12:29:44.546369</timestamp><status_text>so cool!</status_text><likes /></status><status><timestamp>2020-04-02 14:11:35.955676</timestamp><status_text>radically Imperfect!</status_text><likes /></status><status><timestamp>9120-04-02 13:29:19.511585</timestamp><status_text>not bad!</status_text><likes /></status><status><timestamp>2020-04-02 13:29:12.446279</timestamp><status_text>afaf</status_text><likes /></status><status>
+    <status><timestamp>2020-04-07 12:33:18.123526</timestamp><status_text>really?</status_text><likes><friend>
+        <name>Benjamin Bunny</name>
+        <ip_address>192.168.86.71</ip_address>
+    </friend>
+</likes></status><status><timestamp>2020-04-03 15:58:25.628332</timestamp><status_text>that worked fine</status_text><likes><friend>
+        <name>Benjamin Bunny</name>
+        <ip_address>192.168.86.71</ip_address>
+    </friend>
+<friend>
+        <name>Benjamin Bunny</name>
+        <ip_address>192.168.86.71</ip_address>
+    </friend>
+<friend>
+        <name>Benjamin Bunny</name>
+        <ip_address>192.168.86.71</ip_address>
+    </friend>
+<friend>
+        <name>Benjamin Bunny</name>
+        <ip_address>192.168.86.71</ip_address>
+    </friend>
+</likes></status><status><timestamp>2020-04-03 15:58:16.286252</timestamp><status_text>testing on chrome</status_text><likes /></status><status><timestamp>2020-04-03 15:56:05.771330</timestamp><status_text>humph</status_text><likes /></status><status><timestamp>2020-04-03 15:16:50.656438</timestamp><status_text>hello?</status_text><likes /></status><status><timestamp>2020-04-03 15:16:46.138816</timestamp><status_text>still working?</status_text><likes /></status><status><timestamp>2020-04-03 14:44:29.054254</timestamp><status_text>what?</status_text><likes /></status><status><timestamp>2020-04-03 14:44:24.072345</timestamp><status_text>hello</status_text><likes /></status><status><timestamp>2020-04-03 14:44:08.474172</timestamp><status_text>radical Rabbit!</status_text><likes /></status><status><timestamp>2020-04-03 14:33:18.099245</timestamp><status_text>radical Rabbit!</status_text><likes /></status><status><timestamp>2020-04-03 12:29:44.546369</timestamp><status_text>so cool!</status_text><likes /></status><status><timestamp>2020-04-02 14:11:35.955676</timestamp><status_text>radically Imperfect!</status_text><likes /></status><status><timestamp>9120-04-02 13:29:19.511585</timestamp><status_text>not bad!</status_text><likes /></status><status><timestamp>2020-04-02 13:29:12.446279</timestamp><status_text>afaf</status_text><likes /></status><status>
         <timestamp>2020-04-02 13:24:14.238277</timestamp>
         <status_text>hi?</status_text>
         <likes />
