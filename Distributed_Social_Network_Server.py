@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 from Distributed_Social_Network_Response import DistributedSocialNetworkResponse as DSN_response
 
 
+# Extends the server written for the tutorials
 class DistributedSocialNetworkServer(Server):
 
     def __init__(self, host_name, port, use_multiprocessing=False):
@@ -30,10 +31,12 @@ class DistributedSocialNetworkServer(Server):
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+                self.logger.debug('Failed to delete %s. Reason: %s' % (file_path, e))
 
-    def get_response_status(self, path, request_valid, address):
-        response_status = super().get_response_status(path, request_valid, address)
+    # Overrode method to introduce a new response for if the server refuses the connection because the user is not
+    # on the friends list
+    def get_response_status(self, path, request_valid, address, header_fields):
+        response_status = super().get_response_status(path, request_valid, address, header_fields)
         if self.is_not_friend(address):
             response_status = 'Not Friend'
         return response_status

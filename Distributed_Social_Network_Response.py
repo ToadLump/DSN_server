@@ -9,6 +9,8 @@ import socket
 import pycurl
 import certifi
 
+import Time_Handler
+
 
 class ServerUnavailableException(Exception):
     def __str__(self):
@@ -157,14 +159,23 @@ class DistributedSocialNetworkResponse:
         return friend_latest_status
 
     def update_friend_profile_picture(self, ip_address):
-        friend_profile_picture_data = self.request_friend_data(ip_address, self.file_locations['profile_picture'])
         friend_profile_picture_file_path = '{friend_cache_dir}/{ip_address}_profile_picture.jpg' \
             .format(friend_cache_dir=self.file_locations['cached_friend_data_dir'], ip_address=ip_address)
+
+        if os.path.isfile(friend_profile_picture_file_path):
+            modified_time = Time_Handler.get_formatted_str_of_file_modification_time(friend_profile_picture_file_path)
+        else:
+            modified_time = None
+
+        friend_profile_picture_data = self.request_friend_data(ip_address,
+                                                               self.file_locations['profile_picture'],
+                                                               modified_time=modified_time)
+
         with open(friend_profile_picture_file_path, 'wb') as file:
             file.write(friend_profile_picture_data)
         return friend_profile_picture_file_path
 
-    def request_friend_data(self, ip_address, file_path):
+    def request_friend_data(self, ip_address, file_path, modified_time=None):
         url = "http://{ip_address}:{port}/{file_path}".format(ip_address=ip_address,
                                                               port=self.port,
                                                               file_path=file_path)
@@ -174,6 +185,8 @@ class DistributedSocialNetworkResponse:
         curl.setopt(pycurl.CAINFO, certifi.where())
         curl.setopt(pycurl.URL, url)
         curl.setopt(pycurl.TIMEOUT, 1)
+        if modified_time is not None:
+            curl.setopt(curl.HTTPHEADER, ["If-Modified-Since: {}".format(modified_time)])
         curl.setopt(curl.WRITEFUNCTION, response_buffer.write)
         curl.setopt(curl.HEADERFUNCTION, header_buffer.write)
         try:
