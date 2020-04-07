@@ -151,7 +151,7 @@ class DistributedSocialNetworkResponse:
 
     def get_friend_status_element(self, ip_address):
         friend_statuses_xml_string = self.request_friend_data(ip_address,
-                                                              self.file_locations['status_file']).decode('UTF-8')
+                                                              self.file_locations['status_file'])[0].decode('UTF-8')
         if friend_statuses_xml_string == '':
             return ''
         friend_latest_statuses_xml = ET.fromstring(friend_statuses_xml_string)
@@ -167,12 +167,13 @@ class DistributedSocialNetworkResponse:
         else:
             modified_time = None
 
-        friend_profile_picture_data = self.request_friend_data(ip_address,
-                                                               self.file_locations['profile_picture'],
-                                                               modified_time=modified_time)
+        friend_profile_picture_data, is_modified = self.request_friend_data(ip_address,
+                                                                            self.file_locations['profile_picture'],
+                                                                            modified_time=modified_time)
+        if is_modified:
+            with open(friend_profile_picture_file_path, 'wb') as file:
+                file.write(friend_profile_picture_data)
 
-        with open(friend_profile_picture_file_path, 'wb') as file:
-            file.write(friend_profile_picture_data)
         return friend_profile_picture_file_path
 
     def request_friend_data(self, ip_address, file_path, modified_time=None):
@@ -198,14 +199,18 @@ class DistributedSocialNetworkResponse:
         friend_data = response_buffer.getvalue()
         response_buffer.close()
         header_buffer.close()
-        self.check_header(header_data)
-        return friend_data
+        is_modified = self.check_header(header_data)
+        return friend_data, is_modified
 
     @staticmethod
     def check_header(header):
         header_str = header.decode('UTF-8')
         if "Friendship not reciprocated" in header_str:
             raise NotFriendException
+        elif "Not Modified" in header_str:
+            return False
+        else:
+            return True
 
     @staticmethod
     def get_exception_status_element(status_text):

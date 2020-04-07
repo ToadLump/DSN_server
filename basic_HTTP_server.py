@@ -172,8 +172,8 @@ class Server:
             additional_header_lines += "Last-Modified: " +\
                                        Time_Handler.get_formatted_str_of_file_modification_time(path) + '\r\n'
             # html may be generated dynamically, should not be cached for this server
-            if 'text/html' in mime_type:
-                additional_header_lines += "Cache-Control: no-cache\r\n"
+            if 'text/html' in mime_type or 'text/xml' in mime_type:
+                additional_header_lines += "Cache-Control: no-store\r\n"
         else:
             additional_header_lines = ''
         return status_line + additional_header_lines + '\r\n'
