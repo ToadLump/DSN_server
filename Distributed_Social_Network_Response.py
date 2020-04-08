@@ -22,6 +22,11 @@ class NotFriendException(Exception):
         return "Friendship Not Reciprocated"
 
 
+class FriendHasNoStatusException(Exception):
+    def __str__(self):
+        return "Friend Has Not Defined a Status"
+
+
 class DistributedSocialNetworkResponse:
     def __init__(self, http_method, path, ip_address, data, port, file_locations):
         self.http_method = http_method
@@ -96,7 +101,7 @@ class DistributedSocialNetworkResponse:
             try:
                 friend_status_element = self.get_friend_status_element(ip_address)
                 friend_profile_picture_path = self.update_friend_profile_picture(ip_address)
-            except (NotFriendException, ServerUnavailableException) as e:
+            except (NotFriendException, ServerUnavailableException, FriendHasNoStatusException) as e:
                 friend_status_element = self.get_exception_status_element(str(e))
                 friend_profile_picture_path = 'profile-blank.jpg'
                 friend_server_available = False
@@ -155,7 +160,10 @@ class DistributedSocialNetworkResponse:
         if friend_statuses_xml_string == '':
             return ''
         friend_latest_statuses_xml = ET.fromstring(friend_statuses_xml_string)
-        friend_latest_status = friend_latest_statuses_xml[0]
+        try:
+            friend_latest_status = friend_latest_statuses_xml[0]
+        except IndexError:
+            raise FriendHasNoStatusException
         return friend_latest_status
 
     def update_friend_profile_picture(self, ip_address):
