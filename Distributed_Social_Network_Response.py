@@ -1,13 +1,9 @@
 import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from io import BytesIO
-from urllib.parse import urlencode
 import logging
 
 import socket
-import pycurl
-import certifi
 
 import Time_Handler
 import HTTP_Handler
@@ -244,7 +240,7 @@ class DistributedSocialNetworkResponse:
         http_request = HTTP_Handler.generate_http_request('POST', file_path, data=self.data)
         try:
             active_socket = HTTP_Handler.send_http_request(http_request, friend_ip_address, self.port)
-            header, data = HTTP_Handler.retrieve_http_message(active_socket)
+            HTTP_Handler.retrieve_http_message(active_socket)
         except socket.timeout:
             self.logger.info('the server the user requested to like is unavailable')
 
