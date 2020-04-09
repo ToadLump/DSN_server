@@ -1,7 +1,9 @@
-import os, shutil
-from basic_HTTP_server import Server
+import os
+import shutil
 import xml.etree.ElementTree as ET
+
 from Distributed_Social_Network_Response import DistributedSocialNetworkResponse as DSN_response
+from basic_HTTP_server import Server
 
 
 # Extends the server written for the tutorials

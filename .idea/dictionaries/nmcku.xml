@@ -2,6 +2,7 @@
   <dictionary name="nmcku">
     <words>
       <w>onreadystatechange</w>
+      <w>teleport</w>
       <w>xmlhttp</w>
     </words>
   </dictionary>

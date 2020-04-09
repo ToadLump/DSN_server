@@ -10,6 +10,7 @@ import pycurl
 import certifi
 
 import Time_Handler
+import HTTP_Handler
 
 
 class ServerUnavailableException(Exception):
@@ -185,29 +186,16 @@ class DistributedSocialNetworkResponse:
         return friend_profile_picture_file_path
 
     def request_friend_data(self, ip_address, file_path, modified_time=None):
-        url = "http://{ip_address}:{port}/{file_path}".format(ip_address=ip_address,
-                                                              port=self.port,
-                                                              file_path=file_path)
-        response_buffer = BytesIO()
-        header_buffer = BytesIO()
-        curl = pycurl.Curl()
-        curl.setopt(pycurl.CAINFO, certifi.where())
-        curl.setopt(pycurl.URL, url)
-        curl.setopt(pycurl.TIMEOUT, 1)
+        header_fields = {}
         if modified_time is not None:
-            curl.setopt(curl.HTTPHEADER, ["If-Modified-Since: {}".format(modified_time)])
-        curl.setopt(curl.WRITEFUNCTION, response_buffer.write)
-        curl.setopt(curl.HEADERFUNCTION, header_buffer.write)
+            header_fields["If-Modified-Since"] = modified_time
+        http_request = HTTP_Handler.generate_http_request('GET', file_path, header_fields)
         try:
-            curl.perform()
-        except pycurl.error:
+            active_socket = HTTP_Handler.send_http_request(http_request, ip_address, self.port)
+            header, friend_data = HTTP_Handler.retrieve_http_message(active_socket)
+        except socket.timeout:
             raise ServerUnavailableException
-        curl.close()
-        header_data = header_buffer.getvalue()
-        friend_data = response_buffer.getvalue()
-        response_buffer.close()
-        header_buffer.close()
-        is_modified = self.check_header(header_data)
+        is_modified = self.check_header(header)
         return friend_data, is_modified
 
     @staticmethod
@@ -249,28 +237,16 @@ class DistributedSocialNetworkResponse:
         return ip_address in [ip_address_element.text for ip_address_element in element.findall('.//ip_address')]
 
     def inform_friend_server_about_like(self):
+        file_path = 'friends.html'
         # sending the data to the ip address listed, and then removing that address from the data sent
         # this is an implicit way of telling the servers which one is sending and which is receiving the like
-        url = "http://{ip_address}:{port}/{file_path}".format(ip_address=self.data.pop('ip_address'),
-                                                              port=self.port,
-                                                              file_path='friends.html')
-        curl = pycurl.Curl()
-        curl.setopt(pycurl.CAINFO, certifi.where())
-        curl.setopt(pycurl.URL, url)
-        curl.setopt(pycurl.TIMEOUT, 1)
-
-        post_data = self.data
-        # Form data must be provided already urlencoded.
-        post_fields = urlencode(post_data)
-        # Sets request method to POST,
-        # Content-Type header to application/x-www-form-urlencoded
-        # and data to send in request body.
-        curl.setopt(curl.POSTFIELDS, post_fields)
+        friend_ip_address = self.data.pop('ip_address')
+        http_request = HTTP_Handler.generate_http_request('POST', file_path, data=self.data)
         try:
-            curl.perform()
-        except pycurl.error:
+            active_socket = HTTP_Handler.send_http_request(http_request, friend_ip_address, self.port)
+            header, data = HTTP_Handler.retrieve_http_message(active_socket)
+        except socket.timeout:
             self.logger.info('the server the user requested to like is unavailable')
-        curl.close()
 
     def add_like_to_status(self):
         # Read friends file to determine which friend liked the status
