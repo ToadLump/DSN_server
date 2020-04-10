@@ -32,7 +32,7 @@ def send_http_request(http_request, ip_address, port):
     return send_socket
 
 
-def retrieve_http_message(receive_socket):
+def retrieve_http_response(receive_socket):
     bytes_buffer = io.BytesIO()
     max_bytes_per_receive = 1024
     while True:

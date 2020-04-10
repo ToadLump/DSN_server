@@ -188,7 +188,7 @@ class DistributedSocialNetworkResponse:
         http_request = HTTP_Handler.generate_http_request('GET', file_path, header_fields)
         try:
             active_socket = HTTP_Handler.send_http_request(http_request, ip_address, self.port)
-            header, friend_data = HTTP_Handler.retrieve_http_message(active_socket)
+            header, friend_data = HTTP_Handler.retrieve_http_response(active_socket)
         except socket.timeout:
             raise ServerUnavailableException
         is_modified = self.check_header(header)
@@ -240,7 +240,7 @@ class DistributedSocialNetworkResponse:
         http_request = HTTP_Handler.generate_http_request('POST', file_path, data=self.data)
         try:
             active_socket = HTTP_Handler.send_http_request(http_request, friend_ip_address, self.port)
-            HTTP_Handler.retrieve_http_message(active_socket)
+            HTTP_Handler.retrieve_http_response(active_socket)
         except socket.timeout:
             self.logger.info('the server the user requested to like is unavailable')
 
