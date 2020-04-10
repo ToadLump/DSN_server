@@ -3,14 +3,18 @@ from socket import *
 import io
 
 
-def generate_http_request(http_method, requested_file, header_fields={}, data=None):
+def generate_http_request(http_method, requested_file, header_fields=None, data=None):
+    if header_fields is None:
+        header_fields = {}
     if requested_file[0] != '/':
         requested_file = '/' + requested_file
 
     http_request = "{method} {requested_file} HTTP/1.1\r\n".format(method=http_method,
                                                                    requested_file=requested_file)
-    for field in header_fields:
-        http_request += "{field}: {field_data}\r\n".format(field=field, field_data=header_fields[field])
+    if header_fields is not None:
+        for field in header_fields:
+            http_request += "{field}: {field_data}\r\n".format(field=field, field_data=header_fields[field])
+
     http_request += "\r\n"
 
     if data is not None:

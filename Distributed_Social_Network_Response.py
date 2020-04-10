@@ -25,6 +25,9 @@ class FriendHasNoStatusException(Exception):
 
 
 class DistributedSocialNetworkResponse:
+    logger = logging.getLogger('response')
+    logging.basicConfig(level=logging.INFO)
+
     def __init__(self, http_method, path, ip_address, data, port, file_locations):
         self.http_method = http_method
         self.path = path
@@ -32,9 +35,6 @@ class DistributedSocialNetworkResponse:
         self.data = data
         self.file_locations = file_locations
         self.port = port
-
-        self.logger = logging.getLogger('response')
-        logging.basicConfig(level=logging.INFO)
 
         basename = os.path.basename(self.path)
         if basename == 'update.html' and http_method == 'POST':
@@ -99,6 +99,7 @@ class DistributedSocialNetworkResponse:
                 friend_status_element = self.get_friend_status_element(ip_address)
                 friend_profile_picture_path = self.update_friend_profile_picture(ip_address)
             except (NotFriendException, ServerUnavailableException, FriendHasNoStatusException) as e:
+                DistributedSocialNetworkResponse.logger.info(e)
                 friend_status_element = self.get_exception_status_element(str(e))
                 friend_profile_picture_path = 'profile-blank.jpg'
                 friend_server_available = False
@@ -242,7 +243,7 @@ class DistributedSocialNetworkResponse:
             active_socket = HTTP_Handler.send_http_request(http_request, friend_ip_address, self.port)
             HTTP_Handler.retrieve_http_response(active_socket)
         except socket.timeout:
-            self.logger.info('the server the user requested to like is unavailable')
+            DistributedSocialNetworkResponse.logger.info('the server the user requested to like is unavailable')
 
     def add_like_to_status(self):
         # Read friends file to determine which friend liked the status
