@@ -9,8 +9,8 @@ from basic_HTTP_server import Server
 # Extends the server written for the tutorials
 class DistributedSocialNetworkServer(Server):
 
-    def __init__(self, host_name, port, use_multiprocessing=False):
-        super().__init__(host_name, port, use_multiprocessing)
+    def __init__(self, host_name, port, use_multi_threading=False):
+        super().__init__(host_name, port, use_multi_threading)
         self.header_statuses["Not Friend"] = "HTTP/1.1 572 Friendship not reciprocated"
         self.file_locations = {
             'friends_file': 'friends.xml',

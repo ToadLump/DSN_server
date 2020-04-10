@@ -1,5 +1,5 @@
 from socket import *
-import multiprocessing as mp
+import threading
 import os.path
 import mimetypes
 import urllib.parse
@@ -20,9 +20,8 @@ class Server:
 
     accepted_http_methods = ['GET', 'HEAD', 'POST']
 
-    def __init__(self, host_name, port, use_multiprocessing=False):
-        self.use_multiprocessing = use_multiprocessing
-        self.num_processes = mp.cpu_count()
+    def __init__(self, host_name, port, use_multi_threading=False):
+        self.use_multi_threading = use_multi_threading
 
         self.serverPort = port
         self.host_name = host_name
@@ -38,25 +37,25 @@ class Server:
 
         Server.logger.info('The server is ready to receive messages')
 
-        if self.use_multiprocessing:
-            self.handle_with_multiprocessing()
+        if self.use_multi_threading:
+            self.handle_with_multi_threading()
         else:
-            self.handle_with_single_processing()
+            self.handle_with_single_thread()
 
-    def handle_with_single_processing(self):
+    def handle_with_single_thread(self):
         while True:
             connection, address = self.server_socket.accept()
             Server.logger.debug("Got connection")
             self.respond_to_request(connection, address)
 
-    def handle_with_multiprocessing(self):
+    def handle_with_multi_threading(self):
         while True:
             connection, address = self.server_socket.accept()
             Server.logger.debug("Got connection")
-            process = mp.Process(target=self.respond_to_request, args=(connection, address))
-            process.daemon = True
-            process.start()
-            Server.logger.debug("Started process %r", process)
+            thread = threading.Thread(target=self.respond_to_request, args=(connection, address))
+            thread.daemon = True
+            thread.start()
+            Server.logger.debug("Started thread %r", thread)
 
     def respond_to_request(self, connection_socket, address):
         # Retrieve the message sent by the client
