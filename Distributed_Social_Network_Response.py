@@ -190,7 +190,7 @@ class DistributedSocialNetworkResponse:
         try:
             active_socket = HTTP_Handler.send_http_request(http_request, ip_address, self.port)
             header, friend_data = HTTP_Handler.retrieve_http_response(active_socket)
-        except socket.timeout:
+        except (socket.timeout, ConnectionRefusedError):
             raise ServerUnavailableException
         is_modified = self.check_header(header)
         return friend_data, is_modified

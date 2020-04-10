@@ -3,4 +3,8 @@
         <name>Benjamin Bunny</name>
         <ip_address>192.168.86.71</ip_address>
     </friend>
+    <friend>
+        <name>Audrey</name>
+        <ip_address>192.168.86.63</ip_address>
+    </friend>
 </friends>
