@@ -28,14 +28,16 @@ class DistributedSocialNetworkResponse:
     logger = logging.getLogger('response')
     logging.basicConfig(level=logging.INFO)
 
-    def __init__(self, http_method, path, ip_address, data, port, file_locations):
+    def __init__(self, http_method, path, ip_address, data, port, file_locations, resources_dir):
         self.http_method = http_method
         self.path = path
         self.ip_address = ip_address
         self.data = data
         self.file_locations = file_locations
+        self.resources_dir = resources_dir
         self.port = port
 
+        # If requested file is a special case: handle it, otherwise return unaltered file
         basename = os.path.basename(self.path)
         if basename == 'update.html' and http_method == 'POST':
             self.update_status()
@@ -71,10 +73,11 @@ class DistributedSocialNetworkResponse:
             ET.SubElement(status_element, 'likes')
 
             # Read status file and insert new status
-            status_xml = ET.parse(self.file_locations['status_file'])
+            status_xml_path = f"{self.resources_dir}{self.file_locations['status_file']}"
+            status_xml = ET.parse(status_xml_path)
             root = status_xml.getroot()
             root.insert(0, status_element)
-            status_xml.write(self.file_locations['status_file'])
+            status_xml.write(status_xml_path)
 
     def generate_friends_html(self):
         friends_list_node = self.generate_friends_list_node()
@@ -87,7 +90,7 @@ class DistributedSocialNetworkResponse:
 
     def generate_friends_list_node(self):
         all_friends_ul_element = ET.Element('ul')
-        friends_xml = ET.parse(self.file_locations['friends_file'])
+        friends_xml = ET.parse(f"{self.resources_dir}{self.file_locations['friends_file']}")
         for friend in friends_xml.findall('friend'):
             friend_ul_element = ET.SubElement(all_friends_ul_element, 'ul')
 
@@ -99,7 +102,7 @@ class DistributedSocialNetworkResponse:
                 friend_status_element = self.get_friend_status_element(ip_address)
                 friend_profile_picture_path = self.update_friend_profile_picture(ip_address)
             except (NotFriendException, ServerUnavailableException, FriendHasNoStatusException) as e:
-                DistributedSocialNetworkResponse.logger.info(e)
+                DistributedSocialNetworkResponse.logger.debug(e)
                 friend_status_element = self.get_exception_status_element(str(e))
                 friend_profile_picture_path = 'profile-blank.jpg'
                 friend_server_available = False

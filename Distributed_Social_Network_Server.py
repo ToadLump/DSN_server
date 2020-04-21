@@ -9,8 +9,8 @@ from basic_HTTP_server import Server
 # Extends the server written for the tutorials
 class DistributedSocialNetworkServer(Server):
 
-    def __init__(self, host_name, port, use_multi_threading=False):
-        super().__init__(host_name, port, use_multi_threading)
+    def __init__(self, host_name, port, use_multi_threading=False, resources_dir=''):
+        super().__init__(host_name, port, use_multi_threading, resources_dir)
         self.header_statuses["Not Friend"] = "HTTP/1.1 572 Friendship not reciprocated"
         self.file_locations = {
             'friends_file': 'friends.xml',
@@ -23,10 +23,11 @@ class DistributedSocialNetworkServer(Server):
         self.delete_cached_friend_info()
 
     def delete_cached_friend_info(self):
-        if not os.path.isdir(self.file_locations['cached_friend_data_dir']):
-            os.mkdir(self.file_locations['cached_friend_data_dir'])
-        for filename in os.listdir(self.file_locations['cached_friend_data_dir']):
-            file_path = os.path.join(self.file_locations['cached_friend_data_dir'], filename)
+        cached_friend_data_dir_in_resources = f"{self.resources_dir}{self.file_locations['cached_friend_data_dir']}"
+        if not os.path.isdir(cached_friend_data_dir_in_resources):
+            os.mkdir(cached_friend_data_dir_in_resources)
+        for filename in os.listdir(cached_friend_data_dir_in_resources):
+            file_path = os.path.join(cached_friend_data_dir_in_resources, filename)
             try:
                 if os.path.isfile(file_path) or os.path.islink(file_path):
                     os.unlink(file_path)
@@ -44,7 +45,7 @@ class DistributedSocialNetworkServer(Server):
         return response_status
 
     def is_not_friend(self, address):
-        friends_xml = ET.parse(self.file_locations['friends_file'])
+        friends_xml = ET.parse(f"{self.resources_dir}{self.file_locations['friends_file']}")
         if address in [friend.find('ip_address').text for friend in friends_xml.findall('friend')]\
                 or address == '127.0.0.1':
             return False
@@ -56,4 +57,5 @@ class DistributedSocialNetworkServer(Server):
                             ip_address,
                             data,
                             self.serverPort,
-                            self.file_locations).get_response()
+                            self.file_locations,
+                            self.resources_dir).get_response()

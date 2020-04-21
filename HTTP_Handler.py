@@ -17,6 +17,7 @@ def generate_http_request(http_method, requested_file, header_fields=None, data=
 
     http_request += "\r\n"
 
+    # prepare post data
     if data is not None:
         http_request += urlencode(data)
 

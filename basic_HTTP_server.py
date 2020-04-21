@@ -20,8 +20,9 @@ class Server:
 
     accepted_http_methods = ['GET', 'HEAD', 'POST']
 
-    def __init__(self, host_name, port, use_multi_threading=False):
+    def __init__(self, host_name, port, use_multi_threading=False, resources_dir=''):
         self.use_multi_threading = use_multi_threading
+        self.resources_dir = resources_dir
 
         self.serverPort = port
         self.host_name = host_name
@@ -118,8 +119,7 @@ class Server:
         else:
             return ''
 
-    @staticmethod
-    def parse_header(request_header):
+    def parse_header(self, request_header):
         lines = request_header.split('\r\n')
         first_line = lines[0]
         first_line_split = first_line.split(' ')
@@ -131,6 +131,7 @@ class Server:
             return method, '', False, {}
         if path == '':
             path = 'index.html'
+        path = f"{self.resources_dir}{path}"
 
         header_fields = {}
         try:
