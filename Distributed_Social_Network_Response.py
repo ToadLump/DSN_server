@@ -143,10 +143,14 @@ class DistributedSocialNetworkResponse:
         like_button_li_element = ET.SubElement(friend_ul_element, 'li')
         like_button_form_element = ET.SubElement(like_button_li_element, 'form')
         like_button_form_element.attrib = {'action': self.file_locations['friends_html'], 'method': 'POST'}
+
+        # These hidden elements are used to ensure the correct friend is notified about the like, and that the friend
+        # can identify which status was liked
         like_button_hidden_ip_address_element = ET.SubElement(like_button_form_element, 'input')
         like_button_hidden_ip_address_element.attrib = {'type': 'hidden', 'name': 'ip_address', 'value': ip_address}
         like_button_hidden_timestamp_element = ET.SubElement(like_button_form_element, 'input')
         like_button_hidden_timestamp_element.attrib = {'type': 'hidden', 'name': 'timestamp', 'value': timestamp}
+
         like_button_button_element = ET.SubElement(like_button_form_element, 'input')
         should_disable = self.disable_if_already_liked(friend_status_element.find('likes'), ip_address)
         like_button_attributes = {'type': 'submit', 'name': 'like',
@@ -202,16 +206,17 @@ class DistributedSocialNetworkResponse:
 
     @staticmethod
     def check_header(header):
-        header_str = header.decode('UTF-8')
-        if "Friendship not reciprocated" in header_str:
+        status, header_fields = HTTP_Handler.parse_response_header(header)
+        if "572" == status['code']:
             raise NotFriendException
-        elif "Not Modified" in header_str:
+        elif "304" == status['code']:
             return False
         else:
             return True
 
     @staticmethod
     def get_exception_status_element(status_text):
+        # This provides a blank status used if an exception occurs while attempting to get friend data
         status_node = ET.fromstring("""
         <status>
         <timestamp></timestamp>

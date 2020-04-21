@@ -9,11 +9,10 @@ def generate_http_request(http_method, requested_file, header_fields=None, data=
     if requested_file[0] != '/':
         requested_file = '/' + requested_file
 
-    http_request = "{method} {requested_file} HTTP/1.1\r\n".format(method=http_method,
-                                                                   requested_file=requested_file)
+    http_request = f"{http_method} {requested_file} HTTP/1.1\r\n"
     if header_fields is not None:
         for field in header_fields:
-            http_request += "{field}: {field_data}\r\n".format(field=field, field_data=header_fields[field])
+            http_request += f"{field}: {header_fields[field]}\r\n"
 
     http_request += "\r\n"
 
@@ -51,3 +50,23 @@ def retrieve_http_response(receive_socket):
     bytes_buffer.close()
     header, _, data = response.partition(b'\r\n\r\n')
     return header, data
+
+
+def parse_response_header(header):
+    header_str = header.decode('UTF-8')
+
+    first_line, _, header_fields_str = header_str.partition('\r\n')
+    http_version, _, code_info = first_line.partition(' ')
+    status_code, _, status_text = code_info.partition(' ')
+
+    header_fields = _extract_header_fields(header_fields_str)
+
+    return {'code': status_code, 'text': status_text, 'http_version': http_version}, header_fields
+
+
+def _extract_header_fields(header_fields_str):
+    header_fields = {}
+    for header_field_str in header_fields_str.split('\r\n'):
+        label, _, value = header_field_str.partition(': ')
+        header_fields[label] = value
+    return header_fields
