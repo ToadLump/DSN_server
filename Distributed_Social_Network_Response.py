@@ -39,10 +39,10 @@ class DistributedSocialNetworkResponse:
 
         # If requested file is a special case: handle it, otherwise return unaltered file
         basename = os.path.basename(self.path)
-        if basename == 'update.html' and http_method == 'POST':
+        if basename == self.file_locations['update_html'] and http_method == 'POST':
             self.update_status()
             self.response = self.get_unaltered_file()
-        elif basename == 'friends.html':
+        elif basename == self.file_locations['friends_html']:
             if http_method == 'POST':
                 if 'ip_address' in self.data:
                     self.inform_friend_server_about_like()
@@ -73,7 +73,7 @@ class DistributedSocialNetworkResponse:
             ET.SubElement(status_element, 'likes')
 
             # Read status file and insert new status
-            status_xml_path = f"{self.resources_dir}{self.file_locations['status_file']}"
+            status_xml_path = f"{self.resources_dir}{self.file_locations['status_xml']}"
             status_xml = ET.parse(status_xml_path)
             root = status_xml.getroot()
             root.insert(0, status_element)
@@ -90,7 +90,7 @@ class DistributedSocialNetworkResponse:
 
     def generate_friends_list_node(self):
         all_friends_ul_element = ET.Element('ul')
-        friends_xml = ET.parse(f"{self.resources_dir}{self.file_locations['friends_file']}")
+        friends_xml = ET.parse(f"{self.resources_dir}{self.file_locations['friends_xml']}")
         for friend in friends_xml.findall('friend'):
             friend_ul_element = ET.SubElement(all_friends_ul_element, 'ul')
 
@@ -142,7 +142,7 @@ class DistributedSocialNetworkResponse:
     def add_like_button(self, friend_status_element, friend_ul_element, ip_address, timestamp):
         like_button_li_element = ET.SubElement(friend_ul_element, 'li')
         like_button_form_element = ET.SubElement(like_button_li_element, 'form')
-        like_button_form_element.attrib = {'action': 'friends.html', 'method': 'POST'}
+        like_button_form_element.attrib = {'action': self.file_locations['friends_html'], 'method': 'POST'}
         like_button_hidden_ip_address_element = ET.SubElement(like_button_form_element, 'input')
         like_button_hidden_ip_address_element.attrib = {'type': 'hidden', 'name': 'ip_address', 'value': ip_address}
         like_button_hidden_timestamp_element = ET.SubElement(like_button_form_element, 'input')
@@ -157,7 +157,7 @@ class DistributedSocialNetworkResponse:
 
     def get_friend_status_element(self, ip_address):
         friend_statuses_xml_string = self.request_friend_data(ip_address,
-                                                              self.file_locations['status_file'])[0].decode('UTF-8')
+                                                              self.file_locations['status_xml'])[0].decode('UTF-8')
         if friend_statuses_xml_string == '':
             return ''
         friend_latest_statuses_xml = ET.fromstring(friend_statuses_xml_string)
@@ -239,7 +239,7 @@ class DistributedSocialNetworkResponse:
         return ip_address in [ip_address_element.text for ip_address_element in element.findall('.//ip_address')]
 
     def inform_friend_server_about_like(self):
-        file_path = 'friends.html'
+        file_path = self.file_locations['friends_html']
         # sending the data to the ip address listed, and then removing that address from the data sent
         # this is an implicit way of telling the servers which one is sending and which is receiving the like
         friend_ip_address = self.data.pop('ip_address')
@@ -252,18 +252,20 @@ class DistributedSocialNetworkResponse:
 
     def add_like_to_status(self):
         # Read friends file to determine which friend liked the status
-        friends_xml = ET.parse(self.file_locations['friends_file'])
+        friends_xml_path_in_resources = f"{self.resources_dir}{self.file_locations['friends_xml']}"
+        friends_xml = ET.parse(friends_xml_path_in_resources)
         liking_friend_element = friends_xml.find(".//friend[ip_address='{}']".format(self.ip_address))
 
         # Read status file and insert like information
-        status_xml = ET.parse(self.file_locations['status_file'])
+        status_xml_path_in_resources = f"{self.resources_dir}{self.file_locations['status_xml']}"
+        status_xml = ET.parse(status_xml_path_in_resources)
         # Uses timestamp to determine if the correct status is being liked
         liked_status = status_xml.find(".//status[timestamp='{}']".format(self.data['timestamp']))
         # Only write like into status file if it is the first like from that friend - avoids resubmitted form
         # from adding additional like before button is disabled
         if not self.is_ip_address_in_element(self.ip_address, liked_status.find('likes')):
             liked_status.find('likes').insert(0, liking_friend_element)
-            status_xml.write(self.file_locations['status_file'])
+            status_xml.write(status_xml_path_in_resources)
 
     def get_response(self):
         return self.response

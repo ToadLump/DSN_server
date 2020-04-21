@@ -1,5 +1,9 @@
 <status_updates>
-<status><timestamp>2020-04-21 11:40:56.696899</timestamp><status_text>testing write status</status_text><likes /></status><status><timestamp>2020-04-10 12:31:37.058164</timestamp><status_text>sloths are better than rabbits, everyone knows</status_text><likes><friend>
+<status><timestamp>2020-04-21 12:39:36.164590</timestamp><status_text>working?</status_text><likes><friend>
+        <name>Benjamin Bunny</name>
+        <ip_address>192.168.86.71</ip_address>
+    </friend>
+    </likes></status><status><timestamp>2020-04-21 11:40:56.696899</timestamp><status_text>testing write status</status_text><likes /></status><status><timestamp>2020-04-10 12:31:37.058164</timestamp><status_text>sloths are better than rabbits, everyone knows</status_text><likes><friend>
         <name>Benjamin Bunny</name>
         <ip_address>192.168.86.71</ip_address>
     </friend>

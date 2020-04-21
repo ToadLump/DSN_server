@@ -13,8 +13,10 @@ class DistributedSocialNetworkServer(Server):
         super().__init__(host_name, port, use_multi_threading, resources_dir)
         self.header_statuses["Not Friend"] = "HTTP/1.1 572 Friendship not reciprocated"
         self.file_locations = {
-            'friends_file': 'friends.xml',
-            'status_file': 'status.xml',
+            'friends_xml': 'friends.xml',
+            'friends_html': 'friends.html',
+            'status_xml': 'status.xml',
+            'update_html': 'update.html',
             'profile_picture': 'profilePicture.jpg',
             'cached_friend_data_dir': 'cached_friend_profile_information'
         }
@@ -45,7 +47,7 @@ class DistributedSocialNetworkServer(Server):
         return response_status
 
     def is_not_friend(self, address):
-        friends_xml = ET.parse(f"{self.resources_dir}{self.file_locations['friends_file']}")
+        friends_xml = ET.parse(f"{self.resources_dir}{self.file_locations['friends_xml']}")
         if address in [friend.find('ip_address').text for friend in friends_xml.findall('friend')]\
                 or address == '127.0.0.1':
             return False
