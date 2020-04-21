@@ -173,7 +173,7 @@ class DistributedSocialNetworkResponse:
 
     def update_friend_profile_picture(self, ip_address):
         friend_profile_picture_file_path = f"{self.file_locations['cached_friend_data_dir']}/{ip_address}" \
-                                           f"_profile_picture.jpg "
+                                           f"_profile_picture.jpg"
         friend_profile_picture_file_path_in_resources = f"{self.resources_dir}{friend_profile_picture_file_path}"
         if os.path.isfile(friend_profile_picture_file_path_in_resources):
             modified_time = Time_Handler.get_formatted_str_of_file_modification_time(
