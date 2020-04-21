@@ -168,11 +168,13 @@ class DistributedSocialNetworkResponse:
         return friend_latest_status
 
     def update_friend_profile_picture(self, ip_address):
-        friend_profile_picture_file_path = '{friend_cache_dir}/{ip_address}_profile_picture.jpg' \
-            .format(friend_cache_dir=self.file_locations['cached_friend_data_dir'], ip_address=ip_address)
-
-        if os.path.isfile(friend_profile_picture_file_path):
-            modified_time = Time_Handler.get_formatted_str_of_file_modification_time(friend_profile_picture_file_path)
+        friend_profile_picture_file_path = f"{self.file_locations['cached_friend_data_dir']}/{ip_address}" \
+                                           f"_profile_picture.jpg "
+        friend_profile_picture_file_path_in_resources = f"{self.resources_dir}{friend_profile_picture_file_path}"
+        if os.path.isfile(friend_profile_picture_file_path_in_resources):
+            modified_time = Time_Handler.get_formatted_str_of_file_modification_time(
+                friend_profile_picture_file_path_in_resources
+            )
         else:
             modified_time = None
 
@@ -180,7 +182,7 @@ class DistributedSocialNetworkResponse:
                                                                             self.file_locations['profile_picture'],
                                                                             modified_time=modified_time)
         if is_modified:
-            with open(friend_profile_picture_file_path, 'wb') as file:
+            with open(friend_profile_picture_file_path_in_resources, 'wb') as file:
                 file.write(friend_profile_picture_data)
 
         return friend_profile_picture_file_path
