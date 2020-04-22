@@ -60,7 +60,7 @@ class Server:
 
     def respond_to_request(self, connection_socket, address):
         # Retrieve the message sent by the client
-        request = connection_socket.recv(1024)
+        request = connection_socket.recv(2048)
 
         # Stops issues from empty requests
         if request == '':
@@ -109,7 +109,7 @@ class Server:
             data_string = decoded_request.partition('\r\n\r\n')[2]
             if data_string == '':
                 # Data was not received, try again. Safari browser requires this.
-                data_string = connection_socket.recv(1024).decode()
+                data_string = connection_socket.recv(2048).decode()
             data = {}
             for data_element in data_string.split('&'):
                 split_data_element = data_element.split('=')

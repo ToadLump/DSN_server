@@ -57,6 +57,18 @@ ol li {
     font-weight: bold;
 }
 
+.online {
+    font-size: small;
+    font-style: italic;
+    color: mediumaquamarine;
+}
+
+.offline {
+    font-size: small;
+    font-style: italic;
+    color: coral;
+}
+
 nav ul {
     margin-left: 0;
     margin-bottom: 0;

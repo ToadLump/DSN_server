@@ -2,7 +2,6 @@ import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
 import logging
-
 import socket
 
 import Time_Handler
@@ -90,46 +89,75 @@ class DistributedSocialNetworkResponse:
 
     def generate_friends_list_node(self):
         all_friends_ul_element = ET.Element('ul')
+
+        # Determine all friends and create a new ul with information from each
         friends_xml = ET.parse(f"{self.resources_dir}{self.file_locations['friends_xml']}")
         for friend in friends_xml.findall('friend'):
             friend_ul_element = ET.SubElement(all_friends_ul_element, 'ul')
-
-            ip_address = friend.find('ip_address').text
-            friend_server_available = True
-
-            # Access friend server to access status info and profile picture
-            try:
-                friend_status_element = self.get_friend_status_element(ip_address)
-                friend_profile_picture_path = self.update_friend_profile_picture(ip_address)
-            except (NotFriendException, ServerUnavailableException, FriendHasNoStatusException) as e:
-                DistributedSocialNetworkResponse.logger.debug(e)
-                friend_status_element = self.get_exception_status_element(str(e))
-                friend_profile_picture_path = 'profile-blank.jpg'
-                friend_server_available = False
-
-            # Add profile picture
-            picture_li_element = ET.SubElement(friend_ul_element, 'li')
-            picture_img_element = ET.SubElement(picture_li_element, 'img')
-            picture_img_element.attrib = {'src': friend_profile_picture_path, 'alt': "profile picture"}
-
-            # Add name
-            self.add_friend_data_li(friend, friend_ul_element, 'name')
-
-            # Add status text
-            self.add_friend_data_li(friend_status_element, friend_ul_element, 'status_text')
-
-            if friend_server_available:
-                # Add timestamp
-                timestamp = self.add_friend_data_li(friend_status_element, friend_ul_element, 'timestamp')
-
-                # Add likes count
-                likes_li_element = ET.SubElement(friend_ul_element, 'li')
-                likes_li_element.attrib = {'class': 'likes'}
-                likes_li_element.text = "Likes: {}".format(len(list(friend_status_element.find('likes'))))
-
-                self.add_like_button(friend_status_element, friend_ul_element, ip_address, timestamp)
-
+            self.generate_friend_list_contents(friend, friend_ul_element)
         return all_friends_ul_element
+
+    def generate_friend_list_contents(self, friend, friend_ul_element):
+        ip_address = friend.find('ip_address').text
+
+        # Access friend server to get status info and profile picture
+        friend_data_available, friend_online, friend_profile_picture_path, friend_status_element = \
+            self.access_friend_server(ip_address)
+
+        # Add profile picture
+        picture_li_element = ET.SubElement(friend_ul_element, 'li')
+        picture_img_element = ET.SubElement(picture_li_element, 'img')
+        picture_img_element.attrib = {'src': friend_profile_picture_path, 'alt': "profile picture"}
+
+        # Add name
+        self.add_friend_data_li(friend, friend_ul_element, 'name')
+
+        # Add status text
+        self.add_friend_data_li(friend_status_element, friend_ul_element, 'status_text')
+
+        self.add_friend_server_status_li(friend_ul_element, friend_online, friend_data_available)
+
+        if friend_data_available:
+            # Add timestamp
+            timestamp = self.add_friend_data_li(friend_status_element, friend_ul_element, 'timestamp')
+
+            # Add likes count
+            likes_li_element = ET.SubElement(friend_ul_element, 'li')
+            likes_li_element.attrib = {'class': 'likes'}
+            likes_li_element.text = f"Likes: {len(list(friend_status_element.find('likes')))}"
+
+            # Add like button
+            self.add_like_button(friend_status_element, friend_ul_element, ip_address, timestamp, friend_online)
+
+    def access_friend_server(self, ip_address):
+        try:
+            friend_status_element, friend_online = self.get_friend_status_element(ip_address)
+            friend_profile_picture_path = self.update_friend_profile_picture(ip_address, friend_online)
+            friend_data_available = True
+        except (NotFriendException, ServerUnavailableException, FriendHasNoStatusException) as e:
+            DistributedSocialNetworkResponse.logger.debug(e)
+            friend_status_element = self.get_exception_status_element(str(e))
+            friend_profile_picture_path = 'profile-blank.jpg'
+            friend_data_available = False
+            if isinstance(e, ServerUnavailableException):
+                friend_online = False
+            else:
+                friend_online = True
+        return friend_data_available, friend_online, friend_profile_picture_path, friend_status_element
+
+    @staticmethod
+    def add_friend_server_status_li(friend_ul_element, friend_online, friend_data_available):
+        online_status = {
+            False: 'offline',
+            True: 'online'
+        }
+        data_available = {
+            False: 'no data available',
+            True: 'data available'
+        }
+        li_element = ET.SubElement(friend_ul_element, 'li')
+        li_element.attrib = {'class': online_status[friend_online]}
+        li_element.text = f"friend {online_status[friend_online]} - {data_available[friend_data_available]}"
 
     @staticmethod
     def add_friend_data_li(element_to_pull_info_from, ul_to_add_to, xpath_to_relevant_element):
@@ -139,7 +167,7 @@ class DistributedSocialNetworkResponse:
         status_li_element.text = node_text
         return node_text
 
-    def add_like_button(self, friend_status_element, friend_ul_element, ip_address, timestamp):
+    def add_like_button(self, friend_status_element, friend_ul_element, ip_address, timestamp, friend_online):
         like_button_li_element = ET.SubElement(friend_ul_element, 'li')
         like_button_form_element = ET.SubElement(like_button_li_element, 'form')
         like_button_form_element.attrib = {'action': self.file_locations['friends_html'], 'method': 'POST'}
@@ -152,44 +180,83 @@ class DistributedSocialNetworkResponse:
         like_button_hidden_timestamp_element.attrib = {'type': 'hidden', 'name': 'timestamp', 'value': timestamp}
 
         like_button_button_element = ET.SubElement(like_button_form_element, 'input')
-        should_disable = self.disable_if_already_liked(friend_status_element.find('likes'), ip_address)
+        should_disable = self.disable_button_if_already_liked(friend_status_element.find('likes'),
+                                                              ip_address,
+                                                              friend_online)
         like_button_attributes = {'type': 'submit', 'name': 'like',
                                   'value': 'like'}
-        # Disable like button if this user has already liked the status
+        # Disable like button if this user has already liked the status or friend server is offline
         like_button_attributes.update(should_disable)
         like_button_button_element.attrib = like_button_attributes
 
     def get_friend_status_element(self, ip_address):
-        friend_statuses_xml_string = self.request_friend_data(ip_address,
-                                                              self.file_locations['status_xml'])[0].decode('UTF-8')
-        if friend_statuses_xml_string == '':
-            return ''
-        friend_latest_statuses_xml = ET.fromstring(friend_statuses_xml_string)
-        try:
-            friend_latest_status = friend_latest_statuses_xml[0]
-        except IndexError:
-            raise FriendHasNoStatusException
-        return friend_latest_status
+        cached_friend_status_path, cached_friend_status_path_in_resources = self.get_paths(ip_address, "status.xml")
+        cache_modified_time = self.get_modification_time(cached_friend_status_path_in_resources)
+        friend_online, friend_statuses_xml_string_encoded, is_modified = \
+            self.request_friend_statuses(cache_modified_time, ip_address)
 
-    def update_friend_profile_picture(self, ip_address):
-        friend_profile_picture_file_path = f"{self.file_locations['cached_friend_data_dir']}/{ip_address}" \
-                                           f"_profile_picture.jpg"
-        friend_profile_picture_file_path_in_resources = f"{self.resources_dir}{friend_profile_picture_file_path}"
-        if os.path.isfile(friend_profile_picture_file_path_in_resources):
-            modified_time = Time_Handler.get_formatted_str_of_file_modification_time(
-                friend_profile_picture_file_path_in_resources
-            )
-        else:
-            modified_time = None
-
-        friend_profile_picture_data, is_modified = self.request_friend_data(ip_address,
-                                                                            self.file_locations['profile_picture'],
-                                                                            modified_time=modified_time)
         if is_modified:
-            with open(friend_profile_picture_file_path_in_resources, 'wb') as file:
+            # Cache the new information
+            friend_statuses_xml_string = friend_statuses_xml_string_encoded.decode()
+            friend_latest_statuses_xml = ET.fromstring(friend_statuses_xml_string)
+            try:
+                friend_latest_status = friend_latest_statuses_xml[0]
+                ET.ElementTree(friend_latest_status).write(cached_friend_status_path_in_resources)
+            except IndexError:
+                raise FriendHasNoStatusException
+        else:
+            # Use the cached information
+            friend_latest_status = ET.parse(cached_friend_status_path_in_resources).getroot()
+        return friend_latest_status, friend_online
+
+    def request_friend_statuses(self, cache_modified_time, ip_address):
+        try:
+            friend_statuses_xml_string_encoded, is_modified = \
+                self.request_friend_data(ip_address,
+                                         self.file_locations['status_xml'],
+                                         modified_time=cache_modified_time)
+            friend_online = True
+        except ServerUnavailableException as e:
+            # If no cached version, pass error along
+            if cache_modified_time is None:
+                raise e
+            # Otherwise, use cached version
+            else:
+                friend_statuses_xml_string_encoded = None
+                friend_online = False
+                is_modified = False
+        return friend_online, friend_statuses_xml_string_encoded, is_modified
+
+    def update_friend_profile_picture(self, ip_address, friend_online):
+        friend_picture_file_path, friend_picture_file_path_in_resources = self.get_paths(ip_address, "picture.jpg")
+        modified_time = self.get_modification_time(friend_picture_file_path_in_resources)
+
+        if friend_online:
+            friend_profile_picture_data, is_modified = self.request_friend_data(ip_address,
+                                                                                self.file_locations['profile_picture'],
+                                                                                modified_time=modified_time)
+        else:
+            friend_profile_picture_data = None
+            is_modified = False
+
+        if is_modified:
+            with open(friend_picture_file_path_in_resources, 'wb') as file:
                 file.write(friend_profile_picture_data)
 
-        return friend_profile_picture_file_path
+        return friend_picture_file_path
+
+    def get_paths(self, ip_address, name):
+        path = f"{self.file_locations['cached_friend_data_dir']}/{ip_address}_{name}"
+        path_in_resources = f"{self.resources_dir}{path}"
+        return path, path_in_resources
+
+    @staticmethod
+    def get_modification_time(path):
+        if os.path.isfile(path):
+            modified_time = Time_Handler.get_formatted_str_of_file_modification_time(path)
+        else:
+            modified_time = None
+        return modified_time
 
     def request_friend_data(self, ip_address, file_path, modified_time=None):
         header_fields = {}
@@ -201,17 +268,19 @@ class DistributedSocialNetworkResponse:
             header, friend_data = HTTP_Handler.retrieve_http_response(active_socket)
         except (socket.timeout, ConnectionRefusedError):
             raise ServerUnavailableException
-        is_modified = self.check_header(header)
+        is_modified = self.check_header_for_modification_and_problems(header)
         return friend_data, is_modified
 
     @staticmethod
-    def check_header(header):
+    def check_header_for_modification_and_problems(header):
         status, header_fields = HTTP_Handler.parse_response_header(header)
         if "572" == status['code']:
             raise NotFriendException
         elif "304" == status['code']:
+            # File has not been modified
             return False
         else:
+            # File has been modified
             return True
 
     @staticmethod
@@ -227,14 +296,15 @@ class DistributedSocialNetworkResponse:
         status_node.find("status_text").text = status_text
         return status_node
 
-    def disable_if_already_liked(self, likes_element, friend_ip_address):
+    def disable_button_if_already_liked(self, likes_element, friend_ip_address, friend_online):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect((friend_ip_address, self.port))
+
         # Get the ip address that the friend server sees this computer as
         my_ip_address = s.getsockname()[0]
         s.close()
 
-        if self.is_ip_address_in_element(my_ip_address, likes_element):
+        if self.is_ip_address_in_element(my_ip_address, likes_element) or not friend_online:
             return {'disabled': 'disabled'}
         else:
             return {}
@@ -245,6 +315,7 @@ class DistributedSocialNetworkResponse:
 
     def inform_friend_server_about_like(self):
         file_path = self.file_locations['friends_html']
+
         # sending the data to the ip address listed, and then removing that address from the data sent
         # this is an implicit way of telling the servers which one is sending and which is receiving the like
         friend_ip_address = self.data.pop('ip_address')
@@ -259,15 +330,17 @@ class DistributedSocialNetworkResponse:
         # Read friends file to determine which friend liked the status
         friends_xml_path_in_resources = f"{self.resources_dir}{self.file_locations['friends_xml']}"
         friends_xml = ET.parse(friends_xml_path_in_resources)
-        liking_friend_element = friends_xml.find(".//friend[ip_address='{}']".format(self.ip_address))
+        liking_friend_element = friends_xml.find(f".//friend[ip_address='{self.ip_address}']")
 
         # Read status file and insert like information
         status_xml_path_in_resources = f"{self.resources_dir}{self.file_locations['status_xml']}"
         status_xml = ET.parse(status_xml_path_in_resources)
+
         # Uses timestamp to determine if the correct status is being liked
-        liked_status = status_xml.find(".//status[timestamp='{}']".format(self.data['timestamp']))
+        liked_status = status_xml.find(f".//status[timestamp='{self.data['timestamp']}']")
+
         # Only write like into status file if it is the first like from that friend - avoids resubmitted form
-        # from adding additional like before button is disabled
+        # from adding additional likes before button is disabled
         if not self.is_ip_address_in_element(self.ip_address, liked_status.find('likes')):
             liked_status.find('likes').insert(0, liking_friend_element)
             status_xml.write(status_xml_path_in_resources)
