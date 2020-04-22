@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 import logging
 import socket
+import threading
 
 import Time_Handler
 import HTTP_Handler
@@ -79,25 +80,39 @@ class DistributedSocialNetworkResponse:
             status_xml.write(status_xml_path)
 
     def generate_friends_html(self):
+        # generate a ul list of information from each friend
         friends_list_node = self.generate_friends_list_node()
-
         html_dom = ET.parse(self.path)
         root = html_dom.getroot()
+
+        # Put friends list element into the html document
         root.find(".//div[@id='friends_info']").append(friends_list_node)
         html_string = ET.tostring(root, encoding='UTF-8', method='html')
         return html_string
 
     def generate_friends_list_node(self):
+        # Element that will contain all information from all friends
         all_friends_ul_element = ET.Element('ul')
 
         # Determine all friends and create a new ul with information from each
         friends_xml = ET.parse(f"{self.resources_dir}{self.file_locations['friends_xml']}")
+
+        # Decided to use threading because otherwise the user might have to wait a long time to load the friends page
+        # if multiple friends were offline and the connections were timing out
+        threads = []
         for friend in friends_xml.findall('friend'):
             friend_ul_element = ET.SubElement(all_friends_ul_element, 'ul')
-            self.generate_friend_list_contents(friend, friend_ul_element)
+            populate_friend_data_thread = threading.Thread(target=self.populate_friend_ul_element,
+                                                           args=(friend, friend_ul_element))
+            threads.append(populate_friend_data_thread)
+            populate_friend_data_thread.start()
+
+        for thread in threads:
+            thread.join()
+
         return all_friends_ul_element
 
-    def generate_friend_list_contents(self, friend, friend_ul_element):
+    def populate_friend_ul_element(self, friend, friend_ul_element):
         ip_address = friend.find('ip_address').text
 
         # Access friend server to get status info and profile picture
