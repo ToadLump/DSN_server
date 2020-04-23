@@ -1,5 +1,13 @@
 <status_updates>
-<status><timestamp>2020-04-22 12:31:18.604213</timestamp><status_text>carrot</status_text><likes /></status><status><timestamp>2020-04-21 13:40:18.748302</timestamp><status_text>hello!</status_text><likes /></status><status><timestamp>2020-04-21 12:39:36.164590</timestamp><status_text>working?</status_text><likes><friend>
+<status><timestamp>2020-04-22 15:28:27.468637</timestamp><status_text>testing on chrome again</status_text><likes><friend>
+        <name>Benjamin Bunny</name>
+        <ip_address>192.168.86.71</ip_address>
+    </friend>
+    </likes></status><status><timestamp>2020-04-22 12:31:18.604213</timestamp><status_text>carrot</status_text><likes><friend>
+        <name>Benjamin Bunny</name>
+        <ip_address>192.168.86.71</ip_address>
+    </friend>
+    </likes></status><status><timestamp>2020-04-21 13:40:18.748302</timestamp><status_text>hello!</status_text><likes /></status><status><timestamp>2020-04-21 12:39:36.164590</timestamp><status_text>working?</status_text><likes><friend>
         <name>Benjamin Bunny</name>
         <ip_address>192.168.86.71</ip_address>
     </friend>

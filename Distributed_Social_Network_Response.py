@@ -14,6 +14,11 @@ class ServerUnavailableException(Exception):
         return "Server Not Available Right Now"
 
 
+class ServerMissingFileException(Exception):
+    def __str__(self):
+        return "Server Is Missing Critical File (profilePicture.jpg or status.xml)"
+
+
 class NotFriendException(Exception):
     def __str__(self):
         return "Friendship Not Reciprocated"
@@ -149,7 +154,10 @@ class DistributedSocialNetworkResponse:
             friend_status_element, friend_online = self.get_friend_status_element(ip_address)
             friend_profile_picture_path = self.update_friend_profile_picture(ip_address, friend_online)
             friend_data_available = True
-        except (NotFriendException, ServerUnavailableException, FriendHasNoStatusException) as e:
+        except (NotFriendException,
+                ServerUnavailableException,
+                FriendHasNoStatusException,
+                ServerMissingFileException) as e:
             DistributedSocialNetworkResponse.logger.debug(e)
             friend_status_element = self.get_exception_status_element(str(e))
             friend_profile_picture_path = 'profile-blank.jpg'
@@ -291,6 +299,8 @@ class DistributedSocialNetworkResponse:
         status, header_fields = HTTP_Handler.parse_response_header(header)
         if "572" == status['code']:
             raise NotFriendException
+        elif "404" == status['code']:
+            raise ServerMissingFileException
         elif "304" == status['code']:
             # File has not been modified
             return False
