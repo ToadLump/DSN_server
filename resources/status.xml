@@ -1,5 +1,13 @@
 <status_updates>
-<status><timestamp>2020-04-22 15:28:27.468637</timestamp><status_text>testing on chrome again</status_text><likes><friend>
+<status><timestamp>2020-04-23 14:03:19.591090</timestamp><status_text>okay, last test I can be bothered with</status_text><likes><friend>
+        <name>Benjamin Bunny</name>
+        <ip_address>192.168.86.71</ip_address>
+    </friend>
+    </likes></status><status><timestamp>2020-04-23 13:07:18.016561</timestamp><status_text>testing on Edge</status_text><likes><friend>
+        <name>Benjamin Bunny</name>
+        <ip_address>192.168.86.71</ip_address>
+    </friend>
+    </likes></status><status><timestamp>2020-04-23 13:06:54.699710</timestamp><status_text>testing on IE</status_text><likes /></status><status><timestamp>2020-04-23 13:06:05.003144</timestamp><status_text>hello!</status_text><likes /></status><status><timestamp>2020-04-22 15:28:27.468637</timestamp><status_text>testing on chrome again</status_text><likes><friend>
         <name>Benjamin Bunny</name>
         <ip_address>192.168.86.71</ip_address>
     </friend>
